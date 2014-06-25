@@ -227,7 +227,6 @@ class SignShop extends PluginBase implements Listener{
                             $this->chat($sender, "Using /".$command->getName()." ".$args[0], 4);
                             $i= count($this->var_remove)+1;
                             $this->var_remove[$i]= $sender->getName();
-                            $this->chat($sender, "prova 3".count($this->var_remove), 2);
                             break;   
                         
                         case "respawn":
