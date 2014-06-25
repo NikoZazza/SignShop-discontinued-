@@ -1,6 +1,6 @@
 #SignShop
 SignShop is the plugin for <a href="http://www.pocketmine.net/">PocketMine-PM </a>version 1.4 (API 1.0.0).<br>
-Need the plugin <a href="https://github.com/MinecrafterJPN/PocketMoney">PocketMoney(3.0.x)</a> of MinecrafterJPN.
+Need the plugin <a href="https://github.com/MinecrafterJPN/PocketMoney">PocketMoney(3.0.0)</a> of MinecrafterJPN.
 
 #Installation
 How to install the plugin:<br>
