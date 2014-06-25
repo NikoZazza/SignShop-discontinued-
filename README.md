@@ -22,10 +22,10 @@ How to install the plugin:<br>
 
 | Command | Parameter | Description |
 | :-----: | :-------: | :---------: |
-| /sign create | `<item> <amount> <cost>` | Coming soon |
-| /sign remove | `None` | Coming soon |
-| /sign respawnall | `None` | Coming soon |
-| /sign respawn | `<x> <y> <z> <world>` | Coming soon |
+| /sign create | `<item> <amount> <cost>` | creates Sign with money |
+| /sign remove | `None` | remove a Sign |
+| /sign respawnall | `None` | respawn all Sign on the Server |
+| /sign respawn | `<x> <y> <z> <world>` | respawn a specific sign |
 
 #Contact me
 Facebook: https://www.facebook.com/MCPEZazza<br>
