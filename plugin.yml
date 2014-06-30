@@ -1,7 +1,7 @@
 ---
 name: SignShop
 main: SignShop\SignShop
-version: 0.1
+version: 0.2
 api: 1.0.0
 description: Official plugin for Pocketmine API 1.0.0 
 website: http://zazzamcpe.tk

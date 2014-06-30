@@ -27,29 +27,29 @@ use PocketMoney\PocketMoneyAPI;
 use pocketmine\utils\Utils;
 use pocketmine\event\player\PlayerRespawnEvent;
 class SignShop extends PluginBase implements Listener{
-    public $version_plugin= 0.1;
+    public $version_plugin= 0.2;
     
-    public $sign;
+    public $sign, $timer;
     public $var_create = array();
     public $var_create_id = array();
     public $var_create_aumont = array();
     public $var_create_cost= array();
     public $var_remove= array();
-    public $default_world;
-    
+ 
     public function onLoad(){}
     
-    public function onEnable() {  
-        if(Utils::getURL("http://mcpezazza.altervista.org/plugin/SignShop/latest_version.html") != $this->version_plugin){
-            $this->getLogger()->info(TextFormat::YELLOW."Please update the plugin SignShop"); 
-            $this->getLogger()->info(TextFormat::YELLOW."Please update the plugin SignShop"); 
-        }
+    public function onEnable(){  
+        $this->timer = new Timer($this);
+        $this->getServer()->getScheduler()->scheduleRepeatingTask($this->timer, 1800);
+        
         $this->sign= new Config("./plugins/SignShop/src/SignShop/resources/sign.yml", Config::YAML);
         $this->config= new Config("./plugins/SignShop/src/SignShop/resources/config.yml", Config::YAML, array("version" => $this->version_plugin, "started" => time()));
-
+        
+        if($this->getServer()->getPluginManager()->getPlugin("PocketMoney") ==false){
+            $this->getLogger()->info(TextFormat::RED ."This plugin to work needs the plugin PocketMoney");
+            $this->getServer()->shutdown();
+        }      
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
-        //TODO remove when multiworld
-        $this->default_world= $this->getServer()->getInstance()->getDefaultLevel();
     }
     
     public function playerBlockBreak(BlockBreakEvent $event){
@@ -60,8 +60,7 @@ class SignShop extends PluginBase implements Listener{
             $x= $event->getBlock()->getX();
             $y= $event->getBlock()->getY();
             $z= $event->getBlock()->getZ();
-            //$world = $event->getBlock()->getLevel();
-            $world = $this->default_world->getName();
+            $world = $event->getBlock()->getLevel();
    
             $var = $x.":".$y.":".$z.":".$world;
             if($this->sign->exists($var)){
@@ -99,8 +98,7 @@ class SignShop extends PluginBase implements Listener{
             $x= $event->getBlock()->getX();
             $y= $event->getBlock()->getY();
             $z= $event->getBlock()->getZ();
-            //$world = $event->getBlock()->getLevel();
-            $world = $this->default_world->getName();
+            $world = $event->getBlock()->getLevel();
            
             $var = $x.":".$y.":".$z.":".$world;
             if($this->sign->exists($var)){
@@ -124,8 +122,10 @@ class SignShop extends PluginBase implements Listener{
                     
                         $player->getInventory()->addItem($id);
                     
-                        //$this->sign->set($var, array("available" => $available - $count)); 
-                        //$this->sign->save();
+                        /*
+                         * TODO v.0.3                        
+                        $this->sign->set($var, array("available" => $available - $count)); 
+                        $this->sign->save();*/
                         $this->chat($player, "You bought the contents of the sign", 1);
                     } 
                 }
@@ -135,15 +135,14 @@ class SignShop extends PluginBase implements Listener{
     
     public function playerBlockPlace(BlockPlaceEvent $event){
         $player = $event->getPlayer();
-        $block = $event->getBlock()->getID();        
+        $block = $event->getBlock()->getID();     
         
         if($block == 323 || $block == 63 || $block == 68){
             $x=(Int) $event->getBlock()->getX();
             $y=(Int) $event->getBlock()->getY();
             $z=(Int) $event->getBlock()->getZ();
             
-            //$world = $event->getBlock()->getLevel();
-            $world = $this->default_world->getName();
+            $world = $event->getBlock()->getLevel();
    
             $var = $x.":".$y.":".$z.":".$world;
             if($player->isOp()==true){
@@ -155,9 +154,8 @@ class SignShop extends PluginBase implements Listener{
                             $this->sign->set($var, array("id" => $this->var_create_id[$i], "amount" => $this->var_create_aumont[$i], "available" => 9999, "cost" =>  $this->var_create_cost[$i], "maker"=> $player->getDisplayName()));
                             $this->sign->save();
                             
-                            $pos= new Vector3($x, $y, $z);    
-                            $world= $this->default_world;
-                            $this->signSpawn($pos, $world, $this->var_create_id[$i], $this->var_create_aumont[$i], 99999, $this->var_create_cost[$i], $player->getDisplayName());
+                            $pos= new Vector3($x, $y, $z);  
+                            $this->signSpawn($pos, $world, $this->var_create_id[$i], $this->var_create_aumont[$i], 9999, $this->var_create_cost[$i], $player->getDisplayName());
                             
                             $this->var_create[$i]= NULL;
                             $this->var_create_aumont[$i] = NULL;
@@ -173,7 +171,7 @@ class SignShop extends PluginBase implements Listener{
     }
     
     public function playerSpawn(PlayerRespawnEvent $event){
-        $this->respawnAllSign();
+        $this->respawnAllSign();        
     }
     
     public function onCommand(\pocketmine\command\CommandSender $sender, Command $command, $label, array $args){
@@ -227,6 +225,7 @@ class SignShop extends PluginBase implements Listener{
                             $this->chat($sender, "Using /".$command->getName()." ".$args[0], 4);
                             $i= count($this->var_remove)+1;
                             $this->var_remove[$i]= $sender->getName();
+                            
                             break;   
                         
                         case "respawn":
@@ -240,9 +239,8 @@ class SignShop extends PluginBase implements Listener{
                             $x = $args[1];
                             $y = $args[2];
                             $z = $args[3];
-                            //$world = $args[4];
-                            $world= $this->default_world->getName();
-                            
+                            $world = $args[4];
+                           
                             if(!(is_numeric($x) && is_numeric($y) && is_numeric($z))){
                                 $this->chat($sender, "Invalid coordinates",1);
                                 break;
@@ -265,9 +263,13 @@ class SignShop extends PluginBase implements Listener{
         }
     }
     
-    public function signSpawn(Vector3 $pos, $world, $id, $amount, $available, $cost, $maker){
-        //TODO next update
-        $world= $this->default_world;
+    public function signSpawn(Vector3 $pos, $world, $id, $amount, $available, $cost, $maker){    
+        $world = $this->timer->respawn($world);
+        /* TODO v.0.3
+        $var = $world->getLevel()->getBlockIdAt($pos->x, $pos->y, $pos->z); 
+        if(!($var == 323 || $var = 63 || $var == 68)){
+            $var->getLevel()->setBlockIdAt($pos->x, $pos->y, $pos->z, 323);
+        }*/
         
         $sign = new Sign($world->getChunkAt($pos->x >> 4, $pos->z >> 4), new Compound("", array(
             new Int("x", $pos->x),
@@ -279,23 +281,20 @@ class SignShop extends PluginBase implements Listener{
             new String("Text3", "Price: ".$cost),
             new String("Text4", "Available:".$available)
             )));
-        $sign->saveNBT();   
+        $sign->saveNBT();
+        $sign->spawnToAll();
     }   
     
+    public function converter($var){
+        return $this->getServer()->getLevelByName($var);
+    }
+    
     public function respawnSign($var, $mex){
-        $output = "";
-        
+        $output = "";        
         if($this->sign->exists($var)){
-            $id = $this->sign->get($var)['id'];
-            $amount= $this->sign->get($var)['amount'];
-            $available= $this->sign->get($var)['available'];
-            $cost= $this->sign->get($var)['cost'];
-            $maker= $this->sign->get($var)['maker'];
-            
             $g= explode(":", $var);
             $pos = new Vector3($g[0], $g[1], $g[2]);
-            
-            $this->signSpawn($pos, $g[3], $id, $amount, $available, $cost, $maker);
+            $this->signSpawn($pos, $g[3], $this->sign->get($var)['id'], $this->sign->get($var)['amount'], $this->sign->get($var)['available'], $this->sign->get($var)['cost'], $this->sign->get($var)['maker']);
             
             $output =  "Sign at position ".$var." spawn success";
         }else{
@@ -310,15 +309,11 @@ class SignShop extends PluginBase implements Listener{
     }
     
     public function respawnAllSign(){
-        $i=0;
-        $num = count($this->sign->getAll());
-        if($num<=0){
+        if(count($this->sign->getAll())<=0){
             return "There isn't sign in the world";
         }else{
-            
-            foreach($this->sign->getAll() as $var => $var_var){
+            foreach($this->sign->getAll() as $var => $c){
                 $this->respawnSign($var, 0);    
-                $i=$i+1;
             }
             return "All signs respawned";
         }
