@@ -1,12 +1,12 @@
 #SignShop
 SignShop is the plugin for <a href="http://www.pocketmine.net/">PocketMine-PM </a>version 1.4 (API 1.0.0).<br>
-Need the plugin <a href="https://github.com/MinecrafterJPN/PocketMoney">PocketMoney(3.0.0)</a> of MinecrafterJPN.
-This plugin creates sign that, when pressed by users, this gives the user what is written on the cartel.
+Need the plugin <a href="https://github.com/MinecrafterJPN/PocketMoney">PocketMoney(3.1.1)</a> of MinecrafterJPN.
+This plugin creates sign that, when pressed by users, this gives the user what is written on the Sign.
 
 #Installation
 How to install the plugin:<br>
-1. Turn off the server with the command /stop <br>
-2. Put the file SignShop.phar in the folder /plugins<br>
+1. Turn <b>off</b> the server with the command <b>/stop</b><br>
+2. Put the file <b>SignShop.phar</b> in the folder<b> /plugins</b><br>
 3. Start your server<br>
 
 #How to create a sign
@@ -27,6 +27,7 @@ How to install the plugin:<br>
 | /sign remove | `None` | remove a Sign |
 | /sign respawnall | `None` | respawn all Sign on the Server |
 | /sign respawn | `<x> <y> <z> <world>` | respawn a specific sign |
+| /sign refill | `<amount>` | ComingSoon |
 
 #Contact me
 Facebook: https://www.facebook.com/MCPEZazza<br>
