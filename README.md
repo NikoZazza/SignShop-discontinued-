@@ -1,7 +1,7 @@
 #SignShop
 SignShop is the plugin for <a href="http://www.pocketmine.net/">PocketMine-PM </a>version 1.4 (API 1.0.0).<br>
-Need the plugin <a href="https://github.com/MinecrafterJPN/PocketMoney">PocketMoney(3.1.1)</a> of MinecrafterJPN.
-This plugin creates sign that, when pressed by users, this gives the user what is written on the Sign.
+Need the plugin <a href="https://github.com/MinecrafterJPN/PocketMoney">PocketMoney(3.1.1)</a> of MinecrafterJPN.<br>
+This plugin creates Sign that, when pressed by users, this gives the user what is written on the Sign.
 
 #Installation
 How to install the plugin:<br>
