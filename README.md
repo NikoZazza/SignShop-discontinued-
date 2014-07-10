@@ -27,7 +27,9 @@ This plugin creates Sign that, when pressed by users, this gives the user what i
 | /sign remove | `None` | remove a Sign |
 | /sign respawnall | `None` | respawn all Sign on the Server |
 | /sign respawn | `<x> <y> <z> <world>` | respawn a specific sign |
-| /sign refill | `<amount>` | ComingSoon |
+| /sign refill | `<amount>` | Refill the selected sign |
+| /sign enable | `<yes-no>` | Enable or Disable the plugin |
+
 
 #Contact me
 Facebook: https://www.facebook.com/MCPEZazza<br>
