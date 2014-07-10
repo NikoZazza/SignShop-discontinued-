@@ -19,9 +19,9 @@ use pocketmine\nbt\tag\Int;
 use pocketmine\tile\Tile;
 use pocketmine\event\player\PlayerRespawnEvent;
 class SignShop extends PluginBase implements Listener{
-    public $version_plugin= 0.3;
+    public $version_plugin= "0.3.1";
     
-    public $sign, $timer;
+    public $sign, $timer, $config;
     public $var_create = array();
     public $var_remove= array();
     public $var_refill = array();
@@ -32,13 +32,13 @@ class SignShop extends PluginBase implements Listener{
     
     public function onEnable(){  
         $this->timer = new Timer($this);
-        $this->getServer()->getScheduler()->scheduleRepeatingTask($this->timer, 1800);
-        
-        if(!is_dir("./plugins/SignShop/src/SignShop/resources")){
-            mkdir("./plugins/SignShop/src/SignShop/resources");
+        $this->getServer()->getScheduler()->scheduleRepeatingTask($this->timer, 12000);   
+        if (!file_exists($this->getDataFolder())){
+            @mkdir($this->getDataFolder(), 0755, true);
         }
-        $this->sign= new Config("./plugins/SignShop/src/SignShop/resources/sign.yml", Config::YAML);
-        $this->config= new Config("./plugins/SignShop/src/SignShop/resources/config.yml", Config::YAML, array("version" => $this->version_plugin, "started" => time()));
+        $this->getLogger()->info($this->getDataFolder());
+        $this->sign = new Config($this->getDataFolder(). "sign.yml", Config::YAML);
+        $this->config = new Config($this->getDataFolder(). "config.yml", Config::YAML, array("version" => $this->version_plugin, "started" => time(), "enabled" => true));
         
         if($this->getServer()->getPluginManager()->getPlugin("PocketMoney") ==true){
             $this->PocketMoney = true;
@@ -56,126 +56,132 @@ class SignShop extends PluginBase implements Listener{
     }
     
     public function playerBlockBreak(BlockBreakEvent $event){
-        $player = $event->getPlayer();
-        $block = $event->getBlock()->getID();        
+        if($this->config->get("enabled") == true){
+            $player = $event->getPlayer();
+            $block = $event->getBlock()->getID();        
         
-        if($block == 323 || $block == 63 || $block == 68){
-            $x= $event->getBlock()->getX();
-            $y= $event->getBlock()->getY();
-            $z= $event->getBlock()->getZ();
-            $world = $event->getBlock()->getLevel();
+            if($block == 323 || $block == 63 || $block == 68){
+                $x= $event->getBlock()->getX();
+                $y= $event->getBlock()->getY();
+                $z= $event->getBlock()->getZ();
+                $world = $event->getBlock()->getLevel();
   
-            $var = $x.":".$y.":".$z.":".$world->getName();
-            if($this->sign->exists($var)){
-                if($player->isOp()==false){      
-                    $event->setCancelled();  
-                }else{
-                    if($this->isExists($this->var_remove, $player->getDisplayName())){
-                        if($this->var_remove[$player->getDisplayName()] != false){
-                            if($this->sign->get($var)["maker"] == $player->getDisplayName()){
-                                $this->sign->remove($var);
-                                $this->sign->save;
-                                $this->var_remove[$player->getDisplayName()]= false;
-                              
-                                $this->chat($player, "The Sign successfully removed", 3);
+                $var = $x.":".$y.":".$z.":".$world->getName();
+                if($this->sign->exists($var)){
+                    if($player->isOp()==false){      
+                        $event->setCancelled();  
+                    }else{
+                        if($this->isExists($this->var_remove, $player->getDisplayName())){
+                            if($this->var_remove[$player->getDisplayName()] != false){
+                                if($this->sign->get($var)["maker"] == $player->getDisplayName()){
+                                    $this->sign->remove($var);
+                                    $this->sign->save;
+                                    $this->var_remove[$player->getDisplayName()]= false;
+                                
+                                    $this->chat($player, "The Sign successfully removed", 3);
+                                }else{
+                                    $this->chat($player, "The Sign is not yours", 1);
+                                    $event->setCancelled();  
+                                }
                             }else{
-                                $this->chat($player, "The Sign is not yours", 1);
                                 $event->setCancelled();  
                             }
                         }else{
                             $event->setCancelled();  
-                        }
-                    }else{
-                        $event->setCancelled();  
-                    }    
-                }                    
+                        }    
+                    }                    
+                }
             }
         }
     }
     
     public function playerBlockTouch(PlayerInteractEvent $event){
-        $player = $event->getPlayer();
-        $block = $event->getBlock()->getID();        
-        $continue = true;
+        if($this->config->get("enabled") == true){
+            $player = $event->getPlayer();
+            $block = $event->getBlock()->getID();        
+            $continue = true;
         
-        if($block == 323 || $block == 63 || $block == 68){
-            $x= $event->getBlock()->getX();
-            $y= $event->getBlock()->getY();
-            $z= $event->getBlock()->getZ();
-            $world = $event->getBlock()->getLevel();
+            if($block == 323 || $block == 63 || $block == 68){
+                $x= $event->getBlock()->getX();
+                $y= $event->getBlock()->getY();
+                $z= $event->getBlock()->getZ();
+                $world = $event->getBlock()->getLevel();
            
-            $var = $x.":".$y.":".$z.":".$world->getName();           
-            if($this->sign->exists($var)){
-                $get = $this->sign->get($var);
-                if($player->isOp()){
-                    if($this->isExists($this->var_refill, $player->getDisplayName())){
-                        if($this->var_refill[$player->getDisplayName()] != false){
-                            if($get["maker"] == $player->getDisplayName()){
-                                $get["available"] = $get["available"] + $this->var_refill[$player->getDisplayName()];
-                                $this->sign->set($var, array_merge($get)); 
-                                $this->sign->save();
-                            
-                                $this->chat($player, "The Sign was stocked with success", 1); 
-                                $this->var_refill[$player->getDisplayName()] = false;
-                                $continue = false;
-                            }else{                      
-                                $this->chat($player, "The Sign is not yours", 1);
+                $var = $x.":".$y.":".$z.":".$world->getName();           
+                if($this->sign->exists($var)){
+                    $get = $this->sign->get($var);
+                    if($player->isOp()){
+                        if($this->isExists($this->var_refill, $player->getDisplayName())){
+                            if($this->var_refill[$player->getDisplayName()] != false){
+                                if($get["maker"] == $player->getDisplayName()){
+                                    $get["available"] = $get["available"] + $this->var_refill[$player->getDisplayName()];
+                                    $this->sign->set($var, array_merge($get)); 
+                                    $this->sign->save();
+                                    
+                                    $this->chat($player, "The Sign was stocked with success", 1); 
+                                    $this->var_refill[$player->getDisplayName()] = false;
+                                    $continue = false;
+                                }else{                      
+                                    $this->chat($player, "The Sign is not yours", 1);
+                                }
                             }
                         }
                     }
-                }
-                if($continue == true){
-                    $money_player = $this->getMoney($player->getDisplayName());
-                    if($money_player < $get["cost"]){
-                        $this->chat($player, "You do not have enough money", 1);                    
-                    }else{
-                        if($get["available"] - $get["amount"]<=0){
-                            $this->chat($player, "The content of the sign is sold out", 2);
+                    if($continue == true){
+                        $money_player = $this->getMoney($player->getDisplayName());
+                        if($money_player < $get["cost"]){
+                            $this->chat($player, "You do not have enough money", 1);                    
                         }else{
-                            $this->addMoney($get["maker"], $get["cost"]);     
-                            $this->addMoney($player->getDisplayName(), -$get["cost"]);
-                            
-                            $id= Item::get($get["id"], 0, $get["amount"]);
-                            $player->getInventory()->addItem($id);
-                        
-                            /* TODO 
-                             * if($player->getInventory()->canAddItem($item))
-                             */
-                            $get["available"]= $get["available"] - $get["amount"];
-                            $this->sign->set($var, array_merge($get)); 
-                            $this->sign->save();
-                            $this->chat($player, "You bought the contents of the sign", 1);
-                        } 
+                            if($get["available"] - $get["amount"]<=0){
+                                $this->chat($player, "The content of the sign is sold out", 2);
+                            }else{
+                                $this->addMoney($get["maker"], $get["cost"]);     
+                                $this->addMoney($player->getDisplayName(), -$get["cost"]);
+                                
+                                $id= Item::get($get["id"], 0, $get["amount"]);
+                                $player->getInventory()->addItem($id);
+                                
+                                /* TODO 
+                                 * if($player->getInventory()->canAddItem($item))
+                                 */
+                                $get["available"]= $get["available"] - $get["amount"];
+                                $this->sign->set($var, array_merge($get)); 
+                                $this->sign->save();
+                                $this->chat($player, "You bought the contents of the sign", 1);
+                            } 
+                        }
                     }
+                    $this->respawnSign($var, 0);
                 }
-                $this->respawnSign($var, 0);
-            }
-        } 
+            }   
+        }
     }
     
     public function playerBlockPlace(BlockPlaceEvent $event){
-        $player = $event->getPlayer();
-        $block = $event->getBlock()->getID();     
+        if($this->config->get("enabled") == true){
+            $player = $event->getPlayer();
+            $block = $event->getBlock()->getID();     
         
-        if($block == 323 || $block == 63 || $block == 68){
-            $x=(Int) $event->getBlock()->getX();
-            $y=(Int) $event->getBlock()->getY();
-            $z=(Int) $event->getBlock()->getZ();
+            if($block == 323 || $block == 63 || $block == 68){
+                $x=(Int) $event->getBlock()->getX();
+                $y=(Int) $event->getBlock()->getY();
+                $z=(Int) $event->getBlock()->getZ();
             
-            $world = $event->getBlock()->getLevel();
+                $world = $event->getBlock()->getLevel();
    
-            $var = $x.":".$y.":".$z.":".$world->getName();
-            if($player->isOp()==true){
-                if($this->isExists($this->var_create, $player->getDisplayName())){
-                    if($this->var_create[$player->getName()] != false){
-                    $z = $this->var_create[$player->getName()];
-                    $this->sign->set($var, array("id" => $z["id"], "amount" => $z["amount"], "available" => $z["available"], "cost" =>  $z["cost"], "maker"=> $player->getDisplayName()));
-                    $this->sign->save();
-                            
-                    $pos= new Vector3($x, $y, $z);  
-                    $this->signSpawn($pos, $world, $z["id"], $z["amount"], $z["amount"], $z["cost"], $player->getDisplayName());
-                
-                    $this->var_create[$player->getName()]= false;
+                $var = $x.":".$y.":".$z.":".$world->getName();
+                if($player->isOp()==true){
+                    if($this->isExists($this->var_create, $player->getDisplayName())){
+                        if($this->var_create[$player->getName()] != false){
+                         $z = $this->var_create[$player->getName()];
+                            $this->sign->set($var, array("id" => $z["id"], "amount" => $z["amount"], "available" => $z["available"], "cost" =>  $z["cost"], "maker"=> $player->getDisplayName()));
+                            $this->sign->save();
+                    
+                            $pos= new Vector3($x, $y, $z);  
+                            $this->signSpawn($pos, $world, $z["id"], $z["amount"], $z["amount"], $z["cost"], $player->getDisplayName());
+                    
+                            $this->var_create[$player->getName()]= false;
+                        }
                     }
                 }
             }
@@ -196,18 +202,24 @@ class SignShop extends PluginBase implements Listener{
     }
     
     public function playerSpawn(PlayerRespawnEvent $event){
-        $this->respawnAllSign();        
+        if($this->config->get("enabled") == true){
+            $this->respawnAllSign();        
+        }
     }
     
     public function onCommand(\pocketmine\command\CommandSender $sender, Command $command, $label, array $args){
         if($command->getName()== "sign"){ 
+            if($this->config->get("enabled") == false){
+                $this->chat($sender, "Sorry the plugin is disabled, please enable it running the command /sign enable <yes> as an admin", 1);
+                
+            }else{
             if($args==true && $args[0]=="respawnall"){
                     $this->chat($sender, "Using /".$command->getName()." ".$args[0], 4);
                     $this->chat($sender, $this->respawnAllSign(), 4);
             }else{
                 if($sender->isOp()==true){
                     if($args==false){
-                        $mex=array("/sign create <item> <amount> <cost> <available>","/sign remove","/sign refill","/sign respawn <x> <y> <z> <world>","/sign respawnall","/sign refill <value>");
+                        $mex=array("/sign create <item> <amount> <cost> <available>","/sign remove","/sign refill","/sign respawn <x> <y> <z> <world>","/sign respawnall","/sign refill <value>","/sign enable <yes-no>");
                         foreach($mex as $var){
                             $this->chat($sender, $var, 4);
                         }    
@@ -295,11 +307,27 @@ class SignShop extends PluginBase implements Listener{
                                 $this->var_refill[$sender->getName()] = $args[1];
                                 $this->chat($sender, "Now touch the sign", 4);
                                 break;
+                            case "enable":
+                                $this->chat($sender, "Using /".$command->getName()." ".$args[0], 4);
+                                if($args[1] == "yes" || $args[1] == "y" || $args[1] == "true"){
+                                    $this->config->set("enable", true);        
+                                    $this->chat($sender, "Now the plugin is activated", 3);
+                                }else{
+                                    if($args[1] == "no" || $args[1] == "n" || $args[1] == "false"){
+                                        $this->config->set("enable", false);   
+                                        $this->chat($sender, "Now the plugin is disabled", 1);
+                                    }else{
+                                        $this->chat($sender, "Invalid arguments", 1);
+                                    }                        
+                                }
+                                $this->config->save();                                                           
+                                break;
                         }
                     }    
                 }else{  
                     $this->chat($sender, "You need to be admin/OP to run this command", 1);
                 }
+            }
             }
         }
     }
