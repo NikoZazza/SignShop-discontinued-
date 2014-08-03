@@ -19,30 +19,37 @@ use pocketmine\nbt\tag\Int;
 use pocketmine\tile\Tile;
 use pocketmine\Player;
 use pocketmine\event\player\PlayerRespawnEvent;
+
 class SignShop extends PluginBase implements Listener{    
-    private $sign, $config, $plr, $action;
+    private $sign, $config, $plr, $action, $mex;
     private $PocketMoney = false;
     private $EconomyS = false;
      
     public function onEnable(){  
         if (!file_exists($this->getDataFolder())){
             @mkdir($this->getDataFolder(), 0755, true);
-        } 
+        }        
+        if(file_exists($this->getDataFolder(). "messages.yml")){
+            $c = new Config($this->getDataFolder(). "messages.yml", Config::YAML);
+            $this->mex = $c->getAll();
+        }else{
+            $this->mex = array(1 => "This plugin to work needs the plugin PocketMoney or EconomyS!", 2 => "The Sign successfully removed!", 3 => "You need to free up space from your inventory to remove this Sign!", 4 => "The Sign is not yours!", 5 => "The Sign was stocked with success!", 6 => "You do not have enough blocks to fill the Sign!", 7 => "You do not have enough money!", 8 => "The content of the Sign is sold out!", 9 => "You bought the contents of the Sign!", 10 => "You dont have the space to buy the contents of this Sign!", 11 => "Sign successfully created!", 12 => "The item was not found or does not have enough items!", 13 => "Invalid arguments!", 14 => "Invalid value of @@ .", 15 => "world", 16 => "player", 17 => "item", 18 => "amount", 19 => "cost", 20 => "coordinates", 21 => "Now place the Sign!", 22 => "Now remove the Sign desired!", 23 => "You need to be admin to run this command!", 24 => "Now touch on the Sign that you want to fill!", 25 => "You have authorized @@ to use the command /sign.", 26 => "You are not authorized to run this command!", 27 => "You have unauthorized @@ to use the command /sign.", 28 => "Now @@ can use the command /sign.", 29 => "Sign at position @@ spawn success!", 30 => "The Sign at position @@ not found!", 31 => "There is not Sign in the world!", 32 => "All Signs respawned!", 33 => "The selected Sign is not your!", 34 => "available");
+        }
         //player: action: remove, param array()
         $this->action = new Config($this->getDataFolder(). "action.yml", Config::YAML);
         $this->sign = new Config($this->getDataFolder(). "sign.yml", Config::YAML);
-        $this->config = new Config($this->getDataFolder(). "config.yml", Config::YAML, array("version" => "0.4.0", "signCreated" => "admin"));
+        $this->config = new Config($this->getDataFolder(). "config.yml", Config::YAML, array("version" => "0.5.0", "signCreated" => "admin"));
         $this->plr = new Config($this->getDataFolder(). "player_authorized.yml", Config::YAML);
 
         if($this->getServer()->getPluginManager()->getPlugin("PocketMoney") ==true){
             $this->PocketMoney = true;
         }
         /* TODO  
-        if($this->getServer()->getPluginManager()->getPlugin("LoadEconomyAPI") ==true){
+        if($this->getServer()->getPluginManager()->getPlugin("EconomyAPI") ==true){
             $this->EconomyS = true;
         } */       
         if($this->PocketMoney == false && $this->EconomyS == false){
-            $this->getLogger()->info(TextFormat::RED ."This plugin to work needs the plugin PocketMoney or EconomyS");
+            $this->getLogger()->info(TextFormat::RED .$this->mex["1"]);
             $this->getServer()->shutdown();
         }
         $this->action->setAll(array());
@@ -51,7 +58,7 @@ class SignShop extends PluginBase implements Listener{
         $this->getServer()->getScheduler()->scheduleRepeatingTask(new Timer($this), 12000);  
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
     }
-    
+        
     public function playerBlockBreak(BlockBreakEvent $event){
         if($event->getBlock()->getID() == 323 || $event->getBlock()->getID() == 63 || $event->getBlock()->getID() == 68){
             $player = $event->getPlayer();
@@ -70,13 +77,13 @@ class SignShop extends PluginBase implements Listener{
                             $this->sign->save();
                             $this->action->remove($player->getDisplayName());
                             $this->action->save();
-                            $this->chat($player, "The Sign successfully removed!", "succes");
+                            $this->chat($player, $this->mex["2"], "succes");
                         }else{
-                            $this->chat($player, "You need to free up space from your inventory to remove this Sign!", "warning");
+                            $this->chat($player, $this->mex["3"], "warning");
                             $event->setCancelled();
                         }
                     }else{
-                        $this->chat($player, "The Sign isn't yours!", "error");
+                        $this->chat($player, $this->mex["4"], "error");
                         $event->setCancelled();  
                     }                        
                 }else{
@@ -105,15 +112,14 @@ class SignShop extends PluginBase implements Listener{
                                 $this->sign->set($var, array_merge($get)); 
                                 $this->sign->save();                    
                             
-                                $this->chat($player, "The Sign was stocked with success", "succes"); 
+                                $this->chat($player, $this->mex["5"], "succes"); 
                                 $this->action->remove($player->getDisplayName());
-                                $this->action->save();
-                                        
+                                $this->action->save();                                        
                             }else{
-                                $this->chat($player, "You do not have enough blocks to fill the Sign!", "warning");
+                                $this->chat($player, $this->mex["6"], "warning");
                             }
                         }else{                      
-                            $this->chat($player, "The selected Sign isn't your!", "error"); 
+                            $this->chat($player, $this->mex["33"], "error"); 
                         }
                         $continue = false;
 
@@ -121,10 +127,10 @@ class SignShop extends PluginBase implements Listener{
                 if($continue == true){
                     $money_player = $this->getMoney($player->getDisplayName());
                     if($money_player < $get["cost"]){
-                        $this->chat($player, "You do not have enough money!", "error");                    
+                        $this->chat($player, $this->mex["7"], "error");                    
                     }else{
                         if($get["available"] - $get["amount"] < 0){
-                            $this->chat($player, "The content of the sign is sold out!", "warning");
+                            $this->chat($player, $this->mex["8"], "warning");
                         }else{
                             $item = Item::get($get["id"], 0, $get["amount"]);
                                                       
@@ -137,10 +143,10 @@ class SignShop extends PluginBase implements Listener{
                                 $get["available"] = $get["available"] - $get["amount"];
                                 $this->sign->set($var, array_merge($get)); 
                                 $this->sign->save();
-                                $this->chat($player, "You bought the contents of the sign!", "succes");
+                                $this->chat($player, $this->mex["9"], "succes");
                                 
                             }else{
-                                $this->chat($player, "You do not have the space to buy the contents of this Sign!", "warning");
+                                $this->chat($player, $this->mex["10"], "warning");
                             }
                         } 
                     }
@@ -167,13 +173,12 @@ class SignShop extends PluginBase implements Listener{
                         $this->respawnSign($var, false);
                         $this->action->remove($player->getDisplayName());
                         $this->action->save();
-                        $this->chat($player, "Sign successfully created!", "success");
+                        $this->chat($player, $this->mex["11"], "success");
                     }else{
-                        $this->chat($player, "The item was not found or does not have enough items...", "error");
-                    }              
-                        
+                        $this->chat($player, $this->mex["12"], "error");
+                    }               
                 }else{
-                    $this->chat($player, "The item was not found!", "error");
+                    $this->chat($player, $this->mex["12"], "error");
                 }               
                 
             } 
@@ -236,9 +241,9 @@ class SignShop extends PluginBase implements Listener{
             if($this->playerAuthorized($sender->getName()) == true || strtolower($sender->getName()) == "console"){
                 if($args==false){
                     if($sender->isOp()){  
-                        $mex=array("/sign create <item> <amount> <cost> <available>", "/sign remove", "/sign refill <item> <amount>", "/sign respawn <x:y:z> <world>", "/sign auth <player>", "/sign unauth <player>", "/sign authorize <admin-list-all>");
+                        $mex=array("/sign create <".$this->mex["17"]."> <".$this->mex["18"]."> <".$this->mex["19"]."> <".$this->mex["34"].">", "/sign remove", "/sign refill <".$this->mex["17"]."> <".$this->mex["18"].">", "/sign respawn <x:y:z> <world>", "/sign auth <".$this->mex["16"].">", "/sign unauth <".$this->mex["16"].">", "/sign authorize <admin-list-all>");
                     }else{
-                        $mex = array("/sign create <item> <amount> <cost> <available>", "/sign remove", "/sign refill <item> <amount>");
+                        $mex = array("/sign create <".$this->mex["17"]."> <".$this->mex["18"]."> <".$this->mex["19"]."> <".$this->mex["34"].">", "/sign remove", "/sign refill <".$this->mex["17"]."> <".$this->mex["18"].">");
                     }                
                     foreach($mex as $var){
                         $this->chat($sender, $var, "info");
@@ -248,52 +253,51 @@ class SignShop extends PluginBase implements Listener{
                     switch($args[0]){
                         case "create":
                             if(count($args) != 5){
-                                $this->chat($sender, "Invalid arguments", "error");
+                                $this->chat($sender, $this->mex["13"], "error");
                                 break;
                             }                          
                             if(!( is_numeric($args[1]) && is_numeric($args[2]) && is_numeric($args[3]) && is_numeric($args[4]))){
-                                $this->chat($sender, "Invalid arguments", "error");
+                                $this->chat($sender, $this->mex["13"], "error");
                                 break;
                             }
                             if($args[1] <= 0){
-                                $this->chat($sender, "Invalid item", "error");
+                                $this->chat($sender, str_replace("@@", $this->mex["14"], $this->mex["17"]), "error");
                                 break;
                             }
                             if($args[2] <= 0 || $args[2] > (45 * 64)){
-                                $this->chat($sender, "Invalid amount", "error");
+                                $this->chat($sender, str_replace("@@", $this->mex["14"], $this->mex["18"]), "error");
                                 break;
                             }
                             if($args[3] < 0){
-                                $this->chat($sender, "Invalid cost", "error");
+                                $this->chat($sender, str_replace("@@", $this->mex["14"], $this->mex["19"]), "error");
                                 break;
                             }
                             if($args[4] < 0){
-                                $this->chat($sender, "Invalid available", "error");
+                                $this->chat($sender, str_replace("@@", $this->mex["14"], $this->mex["34"]), "error");
                                 break;
                             }
                             $this->action->set($sender->getName(), array("action" => "create" ,"id" => $args[1], "amount" => $args[2], "cost" => $args[3], "available" => $args[4]));
                             $this->action->save();
-                            $this->chat($sender, "Now place the Sign", "info");
-                            
+                            $this->chat($sender, $this->mex["21"], "info");                            
                             break;
                             
                         case "remove":
                             $this->action->set($sender->getName(), array("action" => "remove"));
                             $this->action->save();
-                            $this->chat($sender, "Now remove the sign desired", "info");
+                            $this->chat($sender, $this->mex["22"], "info");
                             break;   
                         
                         case "respawn":
                             if(!$sender->isOp()){
-                                $this->chat($sender, "You need to be admin/OP to run this command", "error");
+                                $this->chat($sender, $this->mex["23"], "error");
                                 break;
                             }
                             if(count($args) != 3){
-                                $this->chat($sender, "Invalid arguments", "error");
+                                $this->chat($sender, $this->mex["13"], "error");
                                 break;
                             }                                            
                             if(!(is_numeric($c[0]) && is_numeric($c[1]) && is_numeric($c[2]))){
-                                $this->chat($sender, "Invalid coordinates", "error");
+                                $this->chat($sender, str_replace("@@", $this->mex["14"], $this->mex["20"]), "error");
                                 break;
                             }                  
              
@@ -302,70 +306,70 @@ class SignShop extends PluginBase implements Listener{
                                 
                         case "refill":
                             if(count($args) != 2){
-                                $this->chat($sender, "Invalid arguments", "error");
+                                $this->chat($sender, $this->mex["13"], "error");
                                 break;                                    
                             }
                             if(!is_numeric($args[1]) || $args[1] < 0){
-                                $this->chat($sender, "Invalid amount", "error");
+                                $this->chat($sender, str_replace("@@", $this->mex["14"], $this->mex["18"]), "error");
                                 break;
                             }
                             $this->action->set($sender->getName(), array("action" => "refill", "amount" => $args[1]));
                             $this->action->save();
-                            $this->chat($sender, "Now touch on the sign that you want to fill!", "error");
+                            $this->chat($sender, $this->mex["24"], "error");
                             break;
                         case "auth":
                             if($sender->isOp() == true){
                                 // TODO Fix when player join on the server
                                 if(count($args) != 2){
-                                    $this->chat($sender, "Invalid arguments", "error");
+                                    $this->chat($sender, $this->mex["13"], "error");
                                     break;                                    
                                 }else{
                                     $this->plr->set(strtolower($args[1]), array("authorized" => true));
                                     $this->plr->save();    
-                                    $this->chat($sender, "You have authorized ".$args[1]." to use the command /sign", "info");
+                                    $this->chat($sender, str_replace("@@", $args[1], $this->mex["25"]), "info");
                                 }     
                                 
                             }else{
-                                $this->chat($sender, "You are not authorized to run this command", "error");
+                                $this->chat($sender, $this->mex["26"], "error");
                             }
                             break;
                         case "unauth":
                             if($sender->isOp() == true){
                                 // TODO Fix when player join on the server
                                 if(count($args) != 2){
-                                    $this->chat($sender, "Invalid arguments", "error");
+                                    $this->chat($sender, $this->mex["13"], "error");
                                     break;                                    
                                 }else{                                   
                                     $this->plr->set(strtolower($args[1]), array("authorized" => true));
                                     $this->plr->save(); 
-                                    $this->chat($sender, "You have un-authorized ".$args[1]." to use the command /sign", "info");
+                                    $this->chat($sender, str_replace("@@", $args[1], $this->mex["27"]), "info");
                                 }                                
                             }else{
-                                $this->chat($sender, "You are not authorized to run this command", "error");
+                                $this->chat($sender, $this->mex["26"], "error");
                             }
                             break;
                         case "authorize":
                             if($sender->isOp() == true){
                                 if(count($args) != 2){
-                                    $this->chat($sender, "Invalid arguments", "error");
+                                    $this->chat($sender, $this->mex["13"], "error");
                                     break;                                    
                                 }else{
                                     $args[1] = strtolower($args[1]);
                                     if(!($args[1] != "admin" && $args[1] != "list" && $args[1] != "all")){
                                         $this->config->set("signCreated", $args[1]);
                                         $this->config->save();
-                                        $this->chat($sender, "Now ".$args[1]." now everyone can use the command /sign", "success");
+                                        $this->chat($sender, str_replace("@@", $args[1], $this->mex["28"]), "info");
                                         $this->reloadAuth();
                                     }                                    
                                 }                                
                             }else{
-                                $this->chat($sender, "You are not authorized to run this command", "error");
+                                $this->chat($sender, $this->mex["26"], "error");
                             }                            
                             break;  
                     }
                 }    
             }else{
-                $this->chat($sender, "You are not authorized to run this command", "error");
+                $this->chat($sender, $this->mex["26"], "error");
             }   
         }
     }
@@ -426,15 +430,14 @@ class SignShop extends PluginBase implements Listener{
         if($this->sign->exists($var)){
             $g = explode(":", $var);
             if($g[3] == ""){
-                $g[3] = Server::getInstance()->getDefaultLevel();
+                $g[3] = Server::getInstance()->getDefaultLevel()->getName();
             }
             $this->signSpawn(new Vector3($g[0], $g[1], $g[2]), Server::getInstance()->getLevelByName($g[3]), $this->sign->get($var));
             
-            $output = "Sign at position ".$var." spawn success";
+            $output = str_replace("@@", $var, $this->mex["29"]);
         }else{
-            $output = "The sign not found";
-        }
-        
+            $output = str_replace("@@", $var, $this->mex["30"]);
+        }        
         if($mex == true){
             return $output;
         }
@@ -442,12 +445,12 @@ class SignShop extends PluginBase implements Listener{
     
     public function respawnAllSign(){
         if(count($this->sign->getAll())<=0){
-            return "There isn't sign in the world";
+            return $this->mex["31"];
         }else{
             foreach($this->sign->getAll() as $var => $c){
                 $this->respawnSign($var, false);    
             }
-            return "All signs respawned";
+            return $this->mex["32"];
         }
     }
     
@@ -456,7 +459,7 @@ class SignShop extends PluginBase implements Listener{
             return $this->getServer()->getPluginManager()->getPlugin("PocketMoney")->getMoney($player);
         }else{
             if($this->EconomyS == true){
-            // TODO return $this->getServer()->getPluginManager()->getPlugin("EconomyAPI")->mymoney($player);
+            //TODO return $this->getServer()->getPluginManager()->getPlugin("EconomyAPI")->mymoney($player);
             }
         }
     }
@@ -466,7 +469,7 @@ class SignShop extends PluginBase implements Listener{
             $this->getServer()->getPluginManager()->getPlugin("PocketMoney")->grantMoney($player, $value);
         }else{
             if($this->EconomyS == true){
-            // $this->getServer()->getPluginManager()->getPlugin("EconomyAPI")->useMoney($player, $value);
+            //$this->getServer()->getPluginManager()->getPlugin("EconomyAPI")->useMoney($player, $value);
             }
         }
     }

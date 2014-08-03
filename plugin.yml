@@ -1,10 +1,10 @@
 ---
 name: SignShop
 main: SignShop\SignShop
-version: 0.3.1
-api: [1.0.0]
-description: Official plugin for Pocketmine API 1.0.0 
-website: http://zazzamcpe.tk
+version: 0.5.0
+api: [1.1.0]
+description: "Command to manage some sign with virtual-money on the server server"
+website: https://github.com/xionbig
 commands:
  sign:
   description: "Command to manage some sign with virtual-money on the server server"
