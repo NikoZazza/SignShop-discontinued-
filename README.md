@@ -10,7 +10,7 @@ This plugin creates Sign that, when pressed by users, this gives the user what i
 3. Start your server<br>
 
 #How to create a sign
-1. Execute the command /sign <create> [id] [amount] [cost] [world]
+1. Execute the command /sign <create> [id] [amount] [cost]
 <img src="http://mcpezazza.altervista.org/plugin/SignShop/img/img1.png">
 
 2. Place the block of the Sign (ID 323:0), then exit the text editing of the sign without making changes
