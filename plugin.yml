@@ -1,8 +1,8 @@
 ---
 name: SignShop
 main: SignShop\SignShop
-version: 0.6.0
-api: [1.3.1]
+version: 0.6.1
+api: [1.4.0]
 description: "Command to manage some sign with virtual-money on the server server"
 website: https://github.com/xionbig
 commands:
