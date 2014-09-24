@@ -1,11 +1,23 @@
 ---
 name: SignShop
 main: SignShop\SignShop
-version: 0.6.1
+version: 0.6.2
 api: [1.4.0]
-description: "Command to manage some sign with virtual-money on the server server"
+load: POSTWORLD
+author: xionbig
+authors: [xionbig]
+description: "Command to manage Some sign with virtual-money on the server."
 website: https://github.com/xionbig
+prefix: "SignShop"
 commands:
  sign:
-  description: "Command to manage some sign with virtual-money on the server server"
-  
+  description: "Command to manage some Sign with virtual-money on the server."
+  permission: sign.command
+permissions:
+ sign:
+  default: notop
+  description: "Allows do all that SignShop"
+  children:
+   sign.command:
+    default: true
+    description: "Allows using all the SignShop commands"
