@@ -1,5 +1,5 @@
 #SignShop
-<b>SignShop </b>is the plugin for <a href="http://www.pocketmine.net/">PocketMine-PM </a>version 1.4 (API 1.1.0).<br>
+<b>SignShop </b>is the plugin for <a href="http://www.pocketmine.net/">PocketMine-PM </a>version 1.4 (API 1.4.0).<br>
 Need the plugin <a href="https://github.com/MinecrafterJPN/PocketMoney">PocketMoney(3.1.1)</a> of MinecrafterJPN.<br>
 This plugin creates Sign that, when pressed by users, this gives the user what is written on the Sign.
 
@@ -32,7 +32,4 @@ This plugin creates Sign that, when pressed by users, this gives the user what i
 | /sign unauth | `<player>` | Disallows the player to run the command /sign |
 | /sign authorize | `<all-list-admin>` | Choose who can use the command /sign |
 #Contact me
-Facebook: https://www.facebook.com/MCPEZazza<br>
-Twitter: https://twitter.com/mcpezazza<br>
-Email: help.zazza@yahoo.it <br>
-Site: http://mcpezazza.altervista.org/<br>
+Twitter: https://twitter.com/xionbig<br>
