@@ -4,7 +4,7 @@ Need the plugin <a href="https://github.com/MinecrafterJPN/PocketMoney">PocketMo
 
 This plugin creates Sign that, when pressed by users, this gives the user what is written on the Sign.
 
-For more info, commands, tutorials please visit <a href="xionbig.altervista.org/SignShop">this site.</a>
+<b>For more info, commands, tutorials please visit <a href="xionbig.altervista.org/SignShop">this site.</a></b>
 
 #Installation
 <b>How to install the plugin:</b><br>
