@@ -1,13 +1,13 @@
 ---
 name: SignShop
 main: SignShop\SignShop
-version: 0.6.2
-api: [1.4.0]
+version: 0.7.0
+api: [1.6.0]
 load: POSTWORLD
 author: xionbig
 authors: [xionbig]
 description: "Command to manage Some sign with virtual-money on the server."
-website: https://github.com/xionbig
+website: http://xionbig.altervista.org/SignShop 
 prefix: "SignShop"
 commands:
  sign:

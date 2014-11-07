@@ -131,7 +131,7 @@ array("id" => 44, "damage" => 5, "name" => "StoneBrickSlab"),
 array("id" => 44, "damage" => 6, "name" => "NetherBrickSlab"),
 array("id" => 44, "damage" => 7, "name" => "QuartzSlab"),
 array("id" => 45, "damage" => 0, "name" => "BrickBlock"),
-array("id" => 46, "damage" => 0, "name" => "Tnt"),
+array("id" => 46, "damage" => 0, "name" => "TNT"),
 array("id" => 47, "damage" => 0, "name" => "Bookshelf"),
 array("id" => 48, "damage" => 0, "name" => "MossyCobblestone"),
 array("id" => 49, "damage" => 0, "name" => "Obsidian"),
@@ -627,42 +627,33 @@ array("id" => 2265, "damage" => 0, "name" => "WardDisc"),
 array("id" => 2266, "damage" => 0, "name" => "11Disc"),
 array("id" => 2267, "damage" => 0, "name" => "WaitDisc"),
 );
+    
+    private $itemsById = array(), $itemsByName = array();
+
+    public function onLoad(){
+        foreach($this->items as $var => $c){
+            $this->itemsById[$c["id"].":".$c["damage"]] = $c["name"];
+            $this->itemsByName[strtolower($c["name"])] = $c["id"].":".$c["damage"];
+        }
+        unset($this->items);
+    }    
+    
     public function getName($id, $damage = 0){
-        foreach($this->items as $var => $c){
-            if($c["id"] == $id && $c["damage"] == $damage)
-                return $c["name"];
-        }     
-        return "NULL";
+        if(isset($this->itemsById[$id.":".$damage]))
+            return $this->itemsById[$id.":".$damage]; 
+        else
+            return "ID ".$id.":".$damage;
     }
-    
-    public function isExistsItem($id, $damage){
-        foreach($this->items as $var => $c){
-            if($c["id"] == $id && $c["damage"] == $damage)
-                return true;
-        }
-        return false;           
-    }
-    
-    public function isExistsName($name){
-        trim($name);
-        str_replace(" ", "", $name);
-        strtolower($name);
-        foreach($this->items as $var => $c){
-            if(strtolower($c["name"]) == $name)
-                return true;            
-        }
-        return false;   
-    }
-    
+        
     public function getBlock($name){
-        trim($name);
-        str_replace(" ", "", $name);
-        strtolower($name);
-        foreach($this->items as $var => $c){
-            if(strtolower($c["name"]) == $name)
-                return \pocketmine\block\Block::get($c["id"], $c["damage"]);            
-        }     
-        return \pocketmine\block\Block::get(0, 0);
-    }  
-    
+        $name = str_replace(" ", "", trim($name));
+        
+        if(isset($this->itemsByName[strtolower($name)])){
+            $block = $this->itemsByName[strtolower($name)];
+            $c = explode(":", $block);           
+            
+            return \pocketmine\block\Block::get($c[0], $c[1]);      
+        }else    
+            return \pocketmine\block\Block::get(0, 0);
+    }    
 }
