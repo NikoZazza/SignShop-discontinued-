@@ -1,6 +1,6 @@
 #SignShop
-<b>SignShop </b>is the plugin for <a href="http://www.pocketmine.net/">PocketMine-PM </a>version 1.4 (API 1.7.0).<br>
-Need the plugin <a href="https://github.com/MinecrafterJPN/PocketMoney">PocketMoney(3.1.1)</a> of <b>MinecrafterJPN</b> or plugin <a href="https://github.com/onebone/EconomyS">EconomyS</a> of <b>onebone</b>.<br>
+<b>SignShop </b>is the plugin for <a href="http://www.pocketmine.net/">PocketMine-PM </a>version 1.4 (API 1.9.0).<br>
+Need the plugin <a href="https://github.com/MinecrafterJPN/PocketMoney">PocketMoney(3.1.1)</a> of <b>MinecrafterJPN</b> or plugin <a href="https://github.com/onebone/EconomyS">EconomyS</a> of <b>onebone</b> or plugin <a href="http://forums.pocketmine.net/plugins/massiveeconomy.864/">MassiveEconomy</a> of <b>EvolSoft</b>.<br>
 
 This plugin creates Sign that, when pressed by users, this gives the user what is written on the Sign.
 
