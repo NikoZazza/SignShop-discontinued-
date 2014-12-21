@@ -2,7 +2,7 @@
 /* @author xionbig
  * @link http://xionbig.altervista.org/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 0.8.0 */
+ * @version 0.9.0 */
 
 namespace SignShop\Command;
 
@@ -60,7 +60,7 @@ class SignCommands{
                             if($this->SignMain->getProvider()->existsPlayer($args[2])){
                                 $get = $this->SignMain->getProvider()->getPlayer($args[2]);
                                     
-                                $get["authorized"] = true;
+                                $get["authorized"] = "auth";
                                 $get["changed"] = time();
                                     
                                 $this->SignMain->getProvider()->setPlayer($args[2], $get);
@@ -74,7 +74,7 @@ class SignCommands{
                             if($this->SignMain->getProvider()->existsPlayer($args[2])){
                                 $get = $this->SignMain->getProvider()->getPlayer($args[2]);
                                     
-                                $get["authorized"] = false;
+                                $get["authorized"] = "unauth";
                                 $get["changed"] = time();
                                     
                                 $this->SignMain->getProvider()->setPlayer($args[2], $get);         
@@ -100,10 +100,11 @@ class SignCommands{
                                 
                         case "view":
                             if($this->SignMain->getProvider()->existsPlayer($args[2])){
-                                if($this->SignMain->getProvider()->getPlayer($args[2])["authorized"] != false)
+                                if($this->SignMain->getProvider()->getPlayer($args[2])["authorized"] != "unauth")
                                     $sender->sendMessage(TextFormat::AQUA."[SignShop] ".str_replace("@@", $args[2], "The player @@ is authorized to run the command /sign"));
                                 else
                                     $sender->sendMessage(TextFormat::AQUA."[SignShop] ".str_replace("@@", $args[2], "The player @@ is not authorized to run the command /sign"));
+                                
                                 $sender->sendMessage(TextFormat::AQUA."[SignShop] ".str_replace("@@", $args[2], "The player @@ has earned with the Signs: ".$this->SignMain->getProvider()->getPlayer($args[2])["totEarned"]));
                                 $sender->sendMessage(TextFormat::AQUA."[SignShop] ".str_replace("@@", $args[2], "The player @@ has spent with the Signs: ".$this->SignMain->getProvider()->getPlayer($args[2])["totSpend"]));
                             }else
@@ -122,18 +123,18 @@ class SignCommands{
                 $args[1] = strtolower($args[1]);
                     
                 if($args[1] == "admin" || $args[1] == "list" || $args[1] == "all"){                                 
-                    $this->SignMain->config->set("signCreated", $args[1]);
-                    $this->SignMain->config->set("lastChange", time());
-                    $this->SignMain->config->save();
+                    $this->SignMain->getSetup()->set("signCreated", $args[1]);
+                    $this->SignMain->getSetup()->set("lastChange", time());
+                    $this->SignMain->getSetup()->save();
                 
                     $sender->sendMessage(TextFormat::AQUA."[SignShop] ".str_replace("@@", $args[1], "Now @@ can use the command /sign"));
                                     
                     foreach($this->SignMain->getProvider()->getAllPlayers() as $var => $c){
-                        $auth = false;
-                        if($args[1] == "all") $auth = true;
+                        $auth = "unauth";
+                        if($args[1] == "all") $auth = "auth";
                                         
                         if($args[1] == "admin" && $this->SignMain->isOnlinePlayer($var)){
-                            if($this->SignMain->getPlayer($var)->isOp()) $auth = true;                                                     
+                            if($this->SignMain->getPlayer($var)->isOp()) $auth = "auth";                                                     
                         }
                         $get = $this->SignMain->getProvider()->getPlayer($var);
                         $get["authorized"] = $auth;
@@ -148,17 +149,16 @@ class SignCommands{
     }
 
     public function onCommandUser(CommandSender $sender, array $args){
-        if($this->SignMain->getProvider()->getPlayer($sender->getName())["authorized"] != false){       
+        if($this->SignMain->getProvider()->getPlayer($sender->getName())["authorized"] != "unauth"){       
             switch(strtolower($args[0])){
                 case "h":
                 case "help":
                     $message = [
                             "earned <none|format>",
                             "echo <on|off>",
-                            "exaple <none>",
                             "refill <".$this->SignMain->getMessages()["amount"].">",
                             "view <none>",
-                            "set <auction|amount|cost|maker|unlimited> <value>"
+                            "set <amount|cost|maker|unlimited> <value>"
                         ]; 
                     if($sender->isOp())
                         $message[count($message)+1] = "reload <none>"; 
@@ -177,13 +177,15 @@ class SignCommands{
                         $get["earned"] = 0;
                     
                         $this->SignMain->getProvider()->setPlayer($sender->getName(), $get);       
-                        $sender->sendMessage("[SignShop] The formatting is finished successfully");
+                        $sender->sendMessage("[SignShop] ". $this->SignMain->getMessages()["The_formatting_is_finished_successfully"]);
                         return;
                     }
-                    $message = [
-                        "In total you earned with Signs: ".$this->SignMain->getProvider()->getPlayer($sender->getName())["totEarned"], 
-                        "In total you spent with Signs: ".$this->SignMain->getProvider()->getPlayer($sender->getName())["totSpent"], 
-                        "To format this information, use /sign earned format"];
+                    $value = $this->SignMain->getMoneyManager()->getValue();
+                    $getPlayer = $this->SignMain->getProvider()->getPlayer($sender->getName());
+                    $message = [ 
+                        str_replace("@@", $getPlayer["totEarned"].$value, $this->SignMain->getMessages()["In_total_you_have_earned_@@_with_Signs"]),
+                        str_replace("@@", $getPlayer["totEarned"].$value, $this->SignMain->getMessages()["In_total_you_have_spent_@@_with_Signs"]),
+                        $this->SignMain->getMessages()["To_format_this_information,_use_/sign_earned_format"]];
                     foreach($message as $var)
                         $sender->sendMessage("[SignShop] ".$var);
                     return;
@@ -195,25 +197,19 @@ class SignCommands{
                         case "true":
                             $get["echo"] = true; 
                             $this->SignMain->getProvider()->setPlayer($sender->getName(), $get);                                      
-                            $sender->sendMessage("[SignShop] ". "The action has been executed successfully");
+                            $sender->sendMessage("[SignShop] ". $this->SignMain->getMessages()["The_action_has_been_executed_successfully"]);
                             return;
                         
                         case "off":
                         case "false":
                             $get["echo"] = false; 
                             $this->SignMain->getProvider()->setPlayer($sender->getName(), $get);        
-                            $sender->sendMessage("[SignShop] ". "The action has been executed successfully");
+                            $sender->sendMessage("[SignShop] ". $this->SignMain->getMessages()["The_action_has_been_executed_successfully"]);
                             return;  
                     }
                     $sender->sendMessage("[SignShop] ".$this->SignMain->getMessages()["Invalid_arguments"]);
                     return;
-
-                case "example": 
-                    $message = ["Here's what you write in the Sign:", "  /SignShop", "  ITEM", "  AMOUNTxCOST", "  AVAILABLE"];
-                    foreach($message as $var)
-                        $sender->sendMessage("[SignShop] ".$var);
-                    return;      
-                    
+                   
                 case "r":
                 case "refill":
                     if(count($args) != 2){
@@ -267,15 +263,7 @@ class SignCommands{
                                     $this->SignMain->temp[$sender->getName()] = ["action" => "set", "arg" => "unlimited"];
                                     $sender->sendMessage("[SignShop] ".$this->SignMain->getMessages()["Now_touch_on_the_Sign_that_you_want_to_do_this_action"]);  
                                 }else
-                                    $sender->sendMessage("[SignShop] ".$this->SignMain->getMessages()["Invalid_arguments"]); 
-                                return;
-                                
-                            case "auction": 
-                                if(is_numeric($args[2]) && $args[2] > 0){
-                                    $this->SignMain->temp[$sender->getName()] = ["action" => "set", "arg" => "auction", "value" => $args[2]];                            
-                                    $sender->sendMessage("[SignShop] ".$this->SignMain->getMessages()["Now_touch_on_the_Sign_that_you_want_to_do_this_action"]);
-                                }else
-                                    $sender->sendMessage("[SignShop] ".$this->SignMain->getMessages()["Invalid_arguments"]);
+                                    $sender->sendMessage("[SignShop] ". $this->SignMain->getMessages()["You_are_not_authorized_to_run_this_command"]);
                                 return;
                         }                            
                     }
@@ -289,7 +277,7 @@ class SignCommands{
                         $sender->sendMessage("[SignShop] ". $this->SignMain->getMessages()["You_are_not_authorized_to_run_this_command"]);
                     return;
             }
-            $sender->sendMessage(TextFormat::RED."[SignShop] ".str_replace("@@", $args[0], "The command <@@> was not found! Use /sign help"));
+            $sender->sendMessage(TextFormat::RED."[SignShop] ".str_replace("@@", $args[0], $this->SignMain->getMessages()["The_command_<@@>_was_not_found!_Use_/sign_help"]));
         }else
             $sender->sendMessage("[SignShop] ". $this->SignMain->getMessages()["You_are_not_authorized_to_run_this_command"]);
     }

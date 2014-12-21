@@ -2,14 +2,14 @@
 /* @author xionbig
  * @link http://xionbig.altervista.org/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 0.8.0 */
+ * @version 0.9.0 */
 
-namespace SignShop\provider;
+namespace SignShop\Provider;
 
 use pocketmine\utils\Config;
 
-class YAML{
-    protected $sign, $plr;
+class YAMLProvider{
+    private $sign, $plr;
     
     public function __construct($SignShop){
         $dataResources = $SignShop->getDataFolder()."/resources/";
@@ -19,7 +19,7 @@ class YAML{
         $this->sign = new Config($dataResources. "sign.yml", Config::YAML);
         $this->plr = new Config($dataResources. "player.yml", Config::YAML);
         
-        if($SignShop->config->get("version") != "eighty"){
+        if($SignShop->getSetup()->get("version") != "ninety"){
             foreach($this->plr->getAll() as $var => $c){
                 $c["earned"] = 0; 
                 $c["totEarned"] = 0; 
@@ -35,9 +35,6 @@ class YAML{
                 if(!isset($c["sold"])) $c["sold"] = 0;
                 if(!isset($c["earned"])) $c["earned"] = 0;       
                 if(!isset($c["direction"])) $c["direction"] = 0;
-                if(!isset($c["type"])) $c["type"] = "normal";
-                if(!isset($c["second"])) $c["second"] = 0;
-                if(!isset($c["bidder"])) $c["bidder"] = "";
                     
                 if(!isset($c["damage"])){
                     $c["damage"] = $c["meta"];
@@ -46,31 +43,17 @@ class YAML{
                 $this->sign->set($var, array_merge($c));
                 $this->sign->save();
             }        
-            $SignShop->config->set("version", "eighty");
-            $SignShop->config->save();    
-        }     
-        foreach($this->sign->getAll() as $var => $c){
-                if(!isset($c["time"])) $c["time"] = time();
-                else if(!is_numeric($c["time"])) $c["time"] = time();
-                if(!isset($c["sold"])) $c["sold"] = 0;
-                if(!isset($c["earned"])) $c["earned"] = 0;       
-                if(!isset($c["direction"])) $c["direction"] = 0;
-                if(!isset($c["type"])) $c["type"] = "normal";
-                if(!isset($c["second"])) $c["second"] = 0;
-                if(!isset($c["bidder"])) $c["bidder"] = "";
-                    
-                if(!isset($c["damage"])){
-                    if(isset($c["meta"]))
-                        $c["damage"] = $c["meta"];
-                    else
-                        $c["damage"] = 0;
-                    unset($c["meta"]);
-                }
-                $this->sign->set($var, array_merge($c));
-                $this->sign->save();
-            }        
-        
-        
+            foreach($this->plr->getAll() as $var => $c){
+                if($c["authorized"] == "super") $c["authorized"] = "super";
+                elseif($c["authorized"] == true) $c["authorized"] = "auth";
+                else $c["authorized"] = "unauth";
+                $this->plr->set($var, array_merge($c));
+                $this->plr->save();
+            }     
+            
+            $SignShop->getSetup()->set("version", "eighty");
+            $SignShop->getSetup()->save();   
+        }             
     }
             
     public function getAllPlayers(){

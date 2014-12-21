@@ -2,14 +2,13 @@
 /* @author xionbig
  * @link http://xionbig.altervista.org/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 0.8.0 */
+ * @version 0.9.0 */
 
 namespace SignShop\EventListener;
 
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\item\Item;
-use pocketmine\Server;
 
 class PlayerTouchEvent implements Listener{
     private $SignMain;
@@ -47,10 +46,6 @@ class PlayerTouchEvent implements Listener{
                             break; 
 
                         case "view": 
-                            if($get["type"] == "auction"){
-                                $player->sendMessage("[SignShop] This function is not working with auction");
-                                break;                               
-                            }
                             $mex = [str_replace("@@", $get["maker"], $this->SignMain->getMessages()["This_Sign_is_owned_by_@@"]),
                                     str_replace("@@", date("M-d h:ia", $get["time"]), $this->SignMain->getMessages()["This_Sign_was_created_@@"]), 
                                     str_replace("@@", $get["available"], $this->SignMain->getMessages()["There_are_still_@@_blocks/items"]), 
@@ -94,28 +89,14 @@ class PlayerTouchEvent implements Listener{
                                     
                                         $event->getPlayer()->sendMessage("[SignShop] ". str_replace("@@", $name, $this->SignMain->getMessages()["Now_this_Sign_is_owned_by_@@"]));
                                     }else
+                                        $event->getPlayer()->sendMessage("[SignShop] ".$this->SignMain->getMessages()["The_player_was_not_found"]);
                                     break;
                                 
                                 case "unlimited": 
                                     $get["available"] = "unlimited";
                                     $this->SignMain->getProvider()->setSign($var, $get);
                                     
-                                    $event->getPlayer()->sendMessage("[SignShop] ". str_replace("@@", $get["cost"], "Ora questo cartello ha l'available illimitato"));
-                                    break;
-                                
-                                case "auction":
-                                    if($get["available"] == "unlimited" || $get["available"] == 0 || $get["available"] > 64*45){
-                                        $event->getPlayer()->sendMessage("[SignShop] Please change the available of this Sign");                                       
-                                        break;
-                                    }
-                                    
-                                    $get["type"] = "auction";
-                                    $get["second"] = $this->SignMain->temp[$player->getDisplayName()]["value"];
-                                    
-                                    $this->SignMain->getProvider()->setSign($var, $get);
-                                    $this->SignMain->addSignAuction($var);
-                                    
-                                    $event->getPlayer()->sendMessage("[SignShop] The auction has BEGINNING!!!"); 
+                                    $event->getPlayer()->sendMessage("[SignShop] ". str_replace("@@", $get["cost"], "Now_this_Sign_has_the_unlimited_available"));
                                     break;
                             }
                             $this->SignMain->respawnSign($var);
@@ -125,35 +106,18 @@ class PlayerTouchEvent implements Listener{
                     return;
                 }
                 if(strtolower($event->getPlayer()->getDisplayName()) == strtolower($get["maker"])){
-                    $player->sendMessage("[SignShop] You can not buy from your Sign");
+                    $player->sendMessage("[SignShop] ".$this->SignMain->getMessages()["You_can_not_buy_from_your_Sign"]);
                     return;
                 }
                 if($player->getGamemode() == 1){
                     $player->sendMessage("[SignShop] ". $this->SignMain->getMessages()["You_can_not_buy_in_creative"]);
                     return;
                 }
-                                
-                if($get["type"] == "auction" && $get["second"] > 0){
-                    if($this->SignMain->getMoneyManager()->getMoney($player->getDisplayName()) < $get["cost"] + 1){
-                        $player->sendMessage("[SignShop] ". $this->SignMain->getMessages()["You_do_not_have_enough_money"]);   
-                        return;
-                    }
-                    $get["cost"] += 1;
-                    $bidder = $this->getPlayer($get["bidder"]);
-                    
-                    if($bidder != false)
-                        $bidder->sendMessage("[SignShop] ".$player->getDisplayName()." has bet more of you");
                         
-                    $get["bidder"] = $player->getDisplayName();
-                    $this->SignMain->getProvider()->setSign($var, $get);
-                    $player->sendMessage("[SignShop] You bet ".$get["cost"]+1 .$this->SignMain->getMoneyManager()->getValue());
-                        
-                    return;   
-                }   
                 if($this->SignMain->getMoneyManager()->getMoney($player->getDisplayName()) < $get["cost"])
                     $player->sendMessage("[SignShop] ". $this->SignMain->getMessages()["You_do_not_have_enough_money"]);   
                 elseif($get["available"] != "unlimited" && $get["available"] - $get["amount"] < 0)
-                        $player->sendMessage("[SignShop] ". $this->SignMain->getMessages()["The_content_of_the_Sign_is_sold_out"]);
+                    $player->sendMessage("[SignShop] ". $this->SignMain->getMessages()["The_content_of_the_Sign_is_sold_out"]);
                 else{
                     $item = Item::get($get["id"], $get["damage"], $get["amount"]);             
                     if($player->getInventory()->canAddItem($item)){
@@ -169,7 +133,7 @@ class PlayerTouchEvent implements Listener{
 
                         $this->SignMain->getProvider()->setSign($var, $get); 
                                                         
-                        $player->sendMessage("[SignShop] ".$event->getPlayer()->getDisplayName()." ".$get["maker"]. $this->SignMain->getMessages()["You_bought_the_contents_of_the_Sign"]);
+                        $player->sendMessage("[SignShop] ". $this->SignMain->getMessages()["You_bought_the_contents_of_the_Sign"]);
                             
                         $maker = $this->getPlayer($get["maker"]);
                         if($maker != false && $this->SignMain->getProvider()->getPlayer($get["maker"])["echo"] != false)

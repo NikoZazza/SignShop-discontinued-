@@ -2,7 +2,7 @@
 /* @author xionbig
  * @link http://xionbig.altervista.org/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 0.8.0 */
+ * @version 0.9.0*/
 
 namespace SignShop\EventListener;
 
@@ -18,19 +18,19 @@ class PlayerSpawnEvent implements Listener{
     
     public function playerSpawn(PlayerRespawnEvent $event){
         $player = $event->getPlayer();
-        //$this->SignMain->respawnAllSign();    
+        $this->SignMain->respawnAllSign();    
        
-        $authorized = false;
+        $authorized = "unauth";
         
-        if($this->SignMain->config->get("signCreated") == "admin" && $player->isOp()) $authorized = true;            
-        if($this->SignMain->config->get("signCreated") == "all") $authorized = true;
+        if($this->SignMain->getSetup()->get("signCreated") == "admin" && $player->isOp()) $authorized = "auth";            
+        if($this->SignMain->getSetup()->get("signCreated") == "all") $authorized = "auth";
             
         if($this->SignMain->getProvider()->existsPlayer($player->getDisplayName())){
             $get = $this->SignMain->getProvider()->getPlayer($player->getDisplayName());
             if($get["earned"] > 0)
-                $player->sendMessage("[SignShop] You earned ". $get["earned"]." when you were offline");
+                $player->sendMessage("[SignShop] ". str_replace("@@", $get["earned"], $this->SignMain->getMessages()["You_earned_@@_when_you_were_offline"]));
             
-            if($get["changed"] < $this->SignMain->config->get("lastChanged"))
+            if($get["changed"] < $this->SignMain->getSetup()->get("lastChanged"))
                 $get["authorized"] = $authorized;
 
             $get["earned"] = 0;

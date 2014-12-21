@@ -2,28 +2,33 @@
 /* @author xionbig
  * @link http://xionbig.altervista.org/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 0.8.0 */
+ * @version 0.9.0 */
 
-namespace SignShop\provider;
+namespace SignShop\Provider;
 
-class SQLite{
-    protected $SignMain, $plr, $sign;
+class SQLiteProvider{
+    protected $plr, $sign;
     
-    public function __construct($SignShop){
-        $this->SignMain = $SignShop;
-        
-        if(file_exists($this->SignMain->getDataFolder()."/resources/player.db"))
-            $this->plr = new \SQLite3($this->SignMain->getDataFolder()."/resources/player.db", SQLITE3_OPEN_READWRITE);
+    public function __construct($SignShop){      
+        if(file_exists($SignShop->getDataFolder()."/resources/player.db"))
+            $this->plr = new \SQLite3($SignShop->getDataFolder()."/resources/player.db", SQLITE3_OPEN_READWRITE);
         else
-            $this->plr = new \SQLite3($this->SignMain->getDataFolder()."/resources/player.db", SQLITE3_OPEN_CREATE|SQLITE3_OPEN_READWRITE);
+            $this->plr = new \SQLite3($SignShop->getDataFolder()."/resources/player.db", SQLITE3_OPEN_CREATE|SQLITE3_OPEN_READWRITE);
         
-        if(file_exists($this->SignMain->getDataFolder()."/resources/sign.db"))
-            $this->sign = new \SQLite3($this->SignMain->getDataFolder()."/resources/sign.db", SQLITE3_OPEN_READWRITE);
+        if(file_exists($SignShop->getDataFolder()."/resources/sign.db"))
+            $this->sign = new \SQLite3($SignShop->getDataFolder()."/resources/sign.db", SQLITE3_OPEN_READWRITE);
         else
-            $this->sign = new \SQLite3($this->SignMain->getDataFolder()."/resources/sign.db", SQLITE3_OPEN_CREATE|SQLITE3_OPEN_READWRITE);
+            $this->sign = new \SQLite3($SignShop->getDataFolder()."/resources/sign.db", SQLITE3_OPEN_CREATE|SQLITE3_OPEN_READWRITE);
                 
         $this->sign->exec('CREATE TABLE IF NOT EXISTS sign (var varchar(255), id varchar(255), damage varchar(255), amount varchar(255), available varchar(255), cost varchar(255), maker varchar(255), time varchar(255), sold varchar(255), earned varchar(255), type  varchar(255), second varchar(255), direction varchar(255), bidder varchar(255))');
         $this->plr->exec('CREATE TABLE IF NOT EXISTS plr (player varchar(255), authorized varchar(255), changed varchar(255), echo varchar(255), earned varchar(255), totEarned varchar(255), totSpent varchar(255))'); 
+        
+        foreach($this->getAllPlayers() as $var => $c){
+            if($c["authorized"] == "super") $c["authorized"] = "super";
+            elseif($c["authorized"] == true) $c["authorized"] = "auth";
+            else $c["authorized"] = "unauth";
+            $this->setPlayer($var, $c);
+        }        
     }
     
     public function getAllPlayers(){
@@ -105,11 +110,7 @@ class SQLite{
         return $return;
     }
     
-    public function existsSign($var){
-        if($this->getSign($var) != false) 
-            return true;
-        return false;
-    }
+    
     
     public function setSign($var, array $data){
         if(!$this->existsSign($var))        
@@ -167,6 +168,13 @@ class SQLite{
     public function onDisable(){
         $this->plr->close();
         $this->sign->close();        
-    }    
+    }
+
+    public function existsSign($var){
+        if($this->getSign($var) != false) 
+            return true;
+        return false;
     
+    }
+
 }

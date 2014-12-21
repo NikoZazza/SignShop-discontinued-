@@ -2,11 +2,11 @@
 /* @author xionbig
  * @link http://xionbig.altervista.org/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 0.8.0 */
+ * @version 0.9.0 */
 namespace SignShop;
 
 class ListItems{
-    public $items = array(
+    private $items = array(
         array("id" => 0, "damage" => 0, "name" => "Air"),
         array("id" => 1, "damage" => 0, "name" => "Stone"),
         array("id" => 1, "damage" => 1, "name" => "Granite"),
@@ -628,7 +628,7 @@ class ListItems{
         array("id" => 2267, "damage" => 0, "name" => "WaitDisc")
     );
     
-    protected $itemsById = [], $itemsByName = [];
+    private $itemsById = [], $itemsByName = [];
 
     public function __construct(){
         foreach($this->items as $var => $c){

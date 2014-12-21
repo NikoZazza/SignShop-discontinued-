@@ -2,47 +2,58 @@
 /* @author xionbig
  * @link http://xionbig.altervista.org/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 0.8.0 */
+ * @version 0.9.0 */
 
 namespace SignShop;
 
 class MoneyManager{
-    protected $SignMain, $PocketMoney, $EconomyS;
+    private $SignMain, $PocketMoney = false, $EconomyS = false, $MassiveEconomy = false;
     
     public function __construct($SignShop){
         $this->SignMain = $SignShop;
-        if($SignShop->getServer()->getPluginManager()->getPlugin("PocketMoney")->isEnabled() == true)
+        if($SignShop->getServer()->getPluginManager()->getPlugin("PocketMoney") == true)
             $this->PocketMoney = $SignShop->getServer()->getPluginManager()->getPlugin("PocketMoney");
-            
-        elseif($SignShop->getServer()->getPluginManager()->getPlugin("EconomyAPI")->isEnabled() == true)
+
+        elseif($SignShop->getServer()->getPluginManager()->getPlugin("EconomyAPI") == true)
             $this->EconomyS = $SignShop->getServer()->getPluginManager()->getPlugin("EconomyAPI");
-            
+        
+        elseif($SignShop->getServer()->getPluginManager()->getPlugin("MassiveEconomy") == true)
+            $this->MassiveEconomy = $SignShop->getServer()->getPluginManager()->getPlugin("MassiveEconomy");
+        
         else{
-            $SignShop->getLogger()->info(TextFormat::RED."This plugin to work needs the plugin PocketMoney or EconomyS.");
+            $SignShop->getLogger()->info(\pocketmine\utils\TextFormat::RED."This plugin to work needs the plugin PocketMoney or EconomyS or MassiveEconomy.");
             $SignShop->getServer()->shutdown();
         }  
     }
     
     public function getValue(){
-        if($this->PocketMoney->isEnabled() == true) 
+        if($this->PocketMoney == true) 
             return "pm";
-        elseif($this->EconomyS->isEnabled() == true) 
-            return "$";              
+        elseif($this->EconomyS == true) 
+            return "$";
+        elseif($this->MassiveEconomy == true)
+            return $this->MassiveEconomy->getMoneySymbol();
     }    
     
     public function getMoney($player){
-        if($this->PocketMoney->isEnabled() == true) 
+        if($this->PocketMoney == true) 
             return $this->PocketMoney->getMoney($player);
-        elseif($this->EconomyS->isEnabled() == true) 
-            return $this->EconomyS->mymoney($player);         
+        elseif($this->EconomyS == true) 
+            return $this->EconomyS->mymoney($player);  
+        elseif($this->MassiveEconomy == true)
+            return $this->MassiveEconomy->getMoney($player);
+        return 0;
     }
     
     public function addMoney($player, $value){
-        if($this->PocketMoney->isEnabled() == true) 
+        if($this->PocketMoney == true) 
             $this->PocketMoney->grantMoney($player, $value);
-        
-        elseif($this->EconomyS->isEnabled() == true) 
+        elseif($this->EconomyS == true) 
             $this->EconomyS->setMoney($player, $this->getMoney($player) + $value);
+        elseif($this->MassiveEconomy == true)
+            $this->MassiveEconomy->setMoney($player, $this->getMoney($player) + $value);
+        else return;
+        
         if($this->SignMain->getProvider()->existsPlayer($player)){
             $get = $this->SignMain->getProvider()->getPlayer($player);  
             if($value >=0){
