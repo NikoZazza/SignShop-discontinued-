@@ -2,7 +2,7 @@
 /* @author xionbig
  * @link http://xionbig.altervista.org/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 0.9.0 */
+ * @version 0.9.1 */
 namespace SignShop;
 
 class ListItems{

@@ -2,26 +2,30 @@
 /* @author xionbig
  * @link http://xionbig.altervista.org/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 0.9.0 */
+ * @version 0.9.1 */
 
 namespace SignShop;
+
+use pocketmine\plugin\Plugin;
+use pocketmine\utils\TextFormat;
 
 class MoneyManager{
     private $SignMain, $PocketMoney = false, $EconomyS = false, $MassiveEconomy = false;
     
     public function __construct($SignShop){
         $this->SignMain = $SignShop;
-        if($SignShop->getServer()->getPluginManager()->getPlugin("PocketMoney") == true)
+        
+        if($SignShop->getServer()->getPluginManager()->getPlugin("PocketMoney") instanceof Plugin)
             $this->PocketMoney = $SignShop->getServer()->getPluginManager()->getPlugin("PocketMoney");
 
-        elseif($SignShop->getServer()->getPluginManager()->getPlugin("EconomyAPI") == true)
+        elseif($SignShop->getServer()->getPluginManager()->getPlugin("EconomyAPI")  instanceof Plugin)
             $this->EconomyS = $SignShop->getServer()->getPluginManager()->getPlugin("EconomyAPI");
         
-        elseif($SignShop->getServer()->getPluginManager()->getPlugin("MassiveEconomy") == true)
+        elseif($SignShop->getServer()->getPluginManager()->getPlugin("MassiveEconomy") instanceof Plugin)
             $this->MassiveEconomy = $SignShop->getServer()->getPluginManager()->getPlugin("MassiveEconomy");
         
         else{
-            $SignShop->getLogger()->info(\pocketmine\utils\TextFormat::RED."This plugin to work needs the plugin PocketMoney or EconomyS or MassiveEconomy.");
+            $SignShop->getLogger()->info(TextFormat::RED."This plugin to work needs the plugin PocketMoney or EconomyS or MassiveEconomy.");
             $SignShop->getServer()->shutdown();
         }  
     }

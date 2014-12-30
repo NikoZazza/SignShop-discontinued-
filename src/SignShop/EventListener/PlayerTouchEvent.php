@@ -2,7 +2,7 @@
 /* @author xionbig
  * @link http://xionbig.altervista.org/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 0.9.0 */
+ * @version 0.9.1 */
 
 namespace SignShop\EventListener;
 
@@ -30,7 +30,7 @@ class PlayerTouchEvent implements Listener{
                 if(isset($this->SignMain->temp[$player->getDisplayName()])){   
                     switch($this->SignMain->temp[$player->getDisplayName()]["action"]){
                         case "refill":
-                            if($get["maker"] == $player->getDisplayName()){
+                            if(strtolower($get["maker"]) == strtolower($player->getDisplayName())){
                                 $item = Item::get($get["id"], $get["damage"], $this->SignMain->temp[$player->getDisplayName()]["amount"]);
                                 if($this->hasItemPlayer($player, $item) && $this->removeItemPlayer($player, $item)){
                                     $get["available"] += $item->getCount();
@@ -58,7 +58,7 @@ class PlayerTouchEvent implements Listener{
                             break;
                         
                         case "set":
-                            if($get["maker"] != $player->getDisplayName()){
+                            if(strtolower($get["maker"]) != strtolower($player->getDisplayName())){
                                 $event->getPlayer()->sendMessage("[SignShop] ". $this->SignMain->getMessages()["The_selected_Sign_is_not_your"]); 
                                 break;
                             }

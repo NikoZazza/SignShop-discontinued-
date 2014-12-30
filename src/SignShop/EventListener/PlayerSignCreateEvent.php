@@ -24,11 +24,10 @@ class PlayerSignCreateEvent implements Listener{
         $line2 = trim($event->getLine(2));
         $line3 = trim($event->getLine(3));
         
-        if($line0 == "[signshop]" || $line0 == "/signshop" || $line0 == "/sign"){
+        if($line0 == "[signshop]" || $line0 == "/signshop"){
             $player = $event->getPlayer();
             $error = "";
-            if($this->SignMain->getProvider()->getPlayer($player->getDisplayName())["authorized"] == "true"){
-      
+            if($this->SignMain->getProvider()->getPlayer($player->getDisplayName())["authorized"] != "unauth"){      
                 if(is_numeric($line1) && $line1 > 0){
                     $id = $line1;
                     $damage = 0;                    

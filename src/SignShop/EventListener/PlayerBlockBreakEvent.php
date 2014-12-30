@@ -2,7 +2,7 @@
 /* @author xionbig
  * @link http://xionbig.altervista.org/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 0.9.0 */
+ * @version 0.9.1 */
 
 namespace SignShop\EventListener;
 
@@ -28,7 +28,7 @@ class PlayerBlockBreakEvent implements Listener{
                 $get = $this->SignMain->getProvider()->getSign($var);
                 
                 if(strtolower($get["maker"]) == strtolower($player->getDisplayName())){
-                    if($get["available"] != "unlimited" || $get["type"] != "auction")
+                    if($get["available"] != "unlimited")
                         $item = Item::get($get["id"], $get["damage"], $get["available"]);
                     else
                         $item = Item::get(0, 0, 0);

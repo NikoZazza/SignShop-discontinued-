@@ -2,7 +2,7 @@
 /* @author xionbig
  * @link http://xionbig.altervista.org/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 0.9.0 */
+ * @version 0.9.1 */
 
 namespace SignShop;
 
@@ -23,7 +23,6 @@ use pocketmine\item\Item;
 use pocketmine\block\Block;
 use SignShop\Provider\YAMLProvider;
 use SignShop\Provider\SQLiteProvider;
-use SignShop\Provider\MySQLProvider;
 
 class SignShop extends PluginBase implements Listener{    
     public $temp = [];
@@ -57,9 +56,10 @@ class SignShop extends PluginBase implements Listener{
         
         $this->setup = new Config($dataResources. "config.yml", Config::YAML, [
                 "version" => "ninety",
-                "signCreated" => "admin",
+                "signCreated" => "all",
                 "lastChange" => time(),
                 "dataProvider" => "YAML"
+            
             ]);
         
         switch(strtolower($this->setup->get("dataProvider"))){
