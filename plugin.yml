@@ -1,18 +1,14 @@
 ---
 name: SignShop
 main: SignShop\SignShop
-version: 0.9.1
-api: [1.9.0]
+version: 1.0.0
+api: [1.11.0]
 load: POSTWORLD
 author: xionbig
 authors: [xionbig]
-description: "Command to manage Some sign with virtual-money on the server."
+description: "Command to manage some Sign with virtual-money on the server."
 website: http://xionbig.altervista.org/SignShop 
 prefix: "SignShop"
-commands:
- sign:
-  description: "Command to manage some Sign with virtual-money on the server."
-  permission: sign.command
 permissions:
  sign:
   default: notop

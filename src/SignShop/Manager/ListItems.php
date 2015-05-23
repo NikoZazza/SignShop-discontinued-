@@ -1,9 +1,13 @@
 <?php
-/* @author xionbig
+/**
+ * @author xionbig
  * @link http://xionbig.altervista.org/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 0.9.1 */
-namespace SignShop;
+ * @version 1.0.0 
+ */
+namespace SignShop\Manager;
+
+use pocketmine\item\Item;
 
 class ListItems{
     private $items = array(
@@ -645,12 +649,12 @@ class ListItems{
     }
         
     public function getBlock($name){
-        $name = strtolower(str_replace(" ", "", trim($name)));
+        $name = strtolower(str_replace(" ", "", $name));
         if(isset($this->itemsByName[$name])){
             $block = $this->itemsByName[$name];
             $c = explode(":", $block);               
-            return \pocketmine\item\Item::get($c[0], $c[1]);      
+            return Item::get($c[0], $c[1]);      
         }
-        return \pocketmine\item\Item::get(0, 0);
+        return Item::get(0, 0);
     }    
 }

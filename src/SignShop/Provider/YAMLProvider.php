@@ -1,9 +1,10 @@
 <?php
-/* @author xionbig
+/**
+ * @author xionbig
  * @link http://xionbig.altervista.org/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 0.9.1 */
-
+ * @version 1.0.0
+ */
 namespace SignShop\Provider;
 
 use pocketmine\utils\Config;
@@ -19,19 +20,21 @@ class YAMLProvider{
         $this->sign = new Config($dataResources. "sign.yml", Config::YAML);
         $this->plr = new Config($dataResources. "player.yml", Config::YAML);
         
-        if($SignShop->getSetup()->get("version") != "ninety"){
+        if($SignShop->getSetup()->get("version") != "ninety" && $SignShop->getSetup()->get("version") != "one"){
             foreach($this->plr->getAll() as $var => $c){
                 $c["earned"] = 0; 
                 $c["totEarned"] = 0; 
                 $c["totSpent"] = 0;
                 $c["echo"] = true;
                 
+                if($c["authorized"] == "super") $c["authorized"] = "root";
+                elseif($c["authorized"] == "auth") $c["authorized"] = "allow";
+                elseif($c["authorized"] == "unauth") $c["authorized"] = "denied";
+                
                 $this->plr->set($var, array_merge($c));
                 $this->plr->save();               
             }
             foreach($this->sign->getAll() as $var => $c){
-                if(!isset($c["time"])) $c["time"] = time();
-                else if(!is_numeric($c["time"])) $c["time"] = time();
                 if(!isset($c["sold"])) $c["sold"] = 0;
                 if(!isset($c["earned"])) $c["earned"] = 0;       
                 if(!isset($c["direction"])) $c["direction"] = 0;
@@ -40,18 +43,16 @@ class YAMLProvider{
                     $c["damage"] = $c["meta"];
                     unset($c["meta"]);
                 }
-                $this->sign->set($var, array_merge($c));
+                $pos = explode(":", $var);
+                
+                $pos[3] = str_replace("%", " ", $pos[3]);
+                $this->sign->remove($var);
+                
+                $this->sign->set($pos, array_merge($c));
                 $this->sign->save();
             }        
-            foreach($this->plr->getAll() as $var => $c){
-                if($c["authorized"] == "super") $c["authorized"] = "super";
-                elseif($c["authorized"] == true) $c["authorized"] = "auth";
-                else $c["authorized"] = "unauth";
-                $this->plr->set($var, array_merge($c));
-                $this->plr->save();
-            }     
             
-            $SignShop->getSetup()->set("version", "eighty");
+            $SignShop->getSetup()->set("version", "one");
             $SignShop->getSetup()->save();   
         }             
     }
@@ -100,9 +101,8 @@ class YAMLProvider{
     }
     
     public function getSign($var){
-        if($this->existsSign($var)){
+        if($this->existsSign($var))
             return $this->sign->get($var);
-        }
         return;
     }
     

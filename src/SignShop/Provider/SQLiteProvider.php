@@ -1,13 +1,14 @@
 <?php
-/* @author xionbig
+/**
+ * @author xionbig
  * @link http://xionbig.altervista.org/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 0.9.1 */
-
+ * @version 1.0.0
+ */
 namespace SignShop\Provider;
 
-class SQLiteProvider{
-    protected $plr, $sign;
+class SQLiteProvider {
+    private $plr, $sign;
     
     public function __construct($SignShop){      
         if(file_exists($SignShop->getDataFolder()."/resources/player.db"))
@@ -19,28 +20,41 @@ class SQLiteProvider{
             $this->sign = new \SQLite3($SignShop->getDataFolder()."/resources/sign.db", SQLITE3_OPEN_READWRITE);
         else
             $this->sign = new \SQLite3($SignShop->getDataFolder()."/resources/sign.db", SQLITE3_OPEN_CREATE|SQLITE3_OPEN_READWRITE);
+                      
+        $this->sign->exec('CREATE TABLE IF NOT EXISTS sign (var VARCHAR(255) PRIMARY KEY, id INT(4), damage INT(2), amount INT(10)), available VARCHAR(255), cost INT(255), maker VARCHAR(255), sold INT(255), earned INT(255), direction INT(10))');
+        $this->plr->exec('CREATE TABLE IF NOT EXISTS plr (player varchar(255), authorized varchar(10), changed int(15), echo varchar(6))');
+       
+        if($SignShop->getSetup()->get("version") != "one"){
+            foreach($this->getAllPlayers() as $var => $c){
+                if($c["authorized"] == "super") $c["authorized"] = "root";
+                elseif($c["authorized"] == "auth") $c["authorized"] = "allow";
+                elseif($c["authorized"] == "unauth") $c["authorized"] = "denied";
+                $this->setPlayer($var, $c);
+            }     
+
+            foreach($this->getAllSigns() as $var => $c){
+                $pos = explode(":", $var);
                 
-        $this->sign->exec('CREATE TABLE IF NOT EXISTS sign (var varchar(255), id varchar(255), damage varchar(255), amount varchar(255), available varchar(255), cost varchar(255), maker varchar(255), time varchar(255), sold varchar(255), earned varchar(255), type  varchar(255), second varchar(255), direction varchar(255), bidder varchar(255))');
-        $this->plr->exec('CREATE TABLE IF NOT EXISTS plr (player varchar(255), authorized varchar(255), changed varchar(255), echo varchar(255), earned varchar(255), totEarned varchar(255), totSpent varchar(255))'); 
-        
-        foreach($this->getAllPlayers() as $var => $c){
-            if($c["authorized"] == "super") $c["authorized"] = "super";
-            elseif($c["authorized"] == true) $c["authorized"] = "auth";
-            else $c["authorized"] = "unauth";
-            $this->setPlayer($var, $c);
-        }        
+                $pos[3] = str_replace("%", " ", $pos[3]);
+                $this->removeSign($var);
+                
+                $this->setSign($pos, $c);                
+            }
+        }
     }
     
     public function getAllPlayers(){
         $return = [];
         $query = $this->plr->query("SELECT * FROM plr WHERE 1");
-                
-        while($data = $query->fetchArray(SQLITE3_ASSOC))
-            $return[$data["player"]] = $data;
-        
-        $query->finalize();
-        $query->close();
-        return $return;
+        if($result instanceof \SQLite3Result){
+            while($data = $query->fetchArray(SQLITE3_ASSOC))
+                $return[$data["player"]] = $data;
+            
+            $query->finalize();
+            $query->close();
+            return $return;
+        }
+        return false;
     }
     
     public function existsPlayer($player){
@@ -53,17 +67,14 @@ class SQLiteProvider{
     public function setPlayer($player, array $data){
         $player = strtolower($player);
         if(!$this->existsPlayer($player))        
-            $query = $this->plr->prepare("INSERT INTO plr (player, authorized, changed, echo, earned, totEarned, totSpent) VALUES (:player, :authorized, :changed, :echo, :earned, :totEarned, :totSpent)");
+            $query = $this->plr->prepare("INSERT INTO plr (player, authorized, changed, echo) VALUES (:player, :authorized, :changed, :echo)");
         else
-            $query = $this->plr->prepare("UPDATE plr SET authorized = :authorized, changed = :changed, echo = :echo, earned = :earned, totEarned = :totEarned, totSpent = :totSpent WHERE player = :player");
+            $query = $this->plr->prepare("UPDATE plr SET authorized = :authorized, changed = :changed, echo = :echo WHERE player = :player");
         
         $query->bindValue(":player", $player, SQLITE3_TEXT);
         $query->bindValue(":authorized", $data["authorized"], SQLITE3_TEXT);
-        $query->bindValue(":changed", $data["changed"], SQLITE3_TEXT);
+        $query->bindValue(":changed", $data["changed"], SQLITE3_INTEGER);
         $query->bindValue(":echo", $data["echo"], SQLITE3_TEXT);
-        $query->bindValue(":earned", $data["earned"], SQLITE3_TEXT);
-        $query->bindValue(":totEarned", $data["totEarned"], SQLITE3_TEXT);
-        $query->bindValue(":totSpent", $data["totSpent"], SQLITE3_TEXT);
         
         $query->execute();
         $query->close();
@@ -79,7 +90,7 @@ class SQLiteProvider{
         if($result instanceof \SQLite3Result){
             $data = $result->fetchArray(SQLITE3_ASSOC);
             $result->finalize();
-            if(isset($data["player"]) and $data["player"] === $player){
+            if(isset($data["player"]) && $data["player"] === $player){
                 unset($data["player"]);
                 $query->close();
                 return $data;
@@ -102,36 +113,30 @@ class SQLiteProvider{
     public function getAllSigns(){
         $return = [];
         $query = $this->sign->query("SELECT * FROM sign WHERE 1");
-                
-        while($data = $query->fetchArray(SQLITE3_ASSOC))
-            $return[$data["var"]] = $data;
+        if($result instanceof \SQLite3Result){
+            while($data = $query->fetchArray(SQLITE3_ASSOC))
+                $return[$data["var"]] = $data;
+        }
         $query->finalize();
-        
         return $return;
     }
     
-    
-    
     public function setSign($var, array $data){
         if(!$this->existsSign($var))        
-            $query = $this->sign->prepare("INSERT INTO sign (var, id, damage, amount, available, cost, maker, time, sold, earned, type, second, direction, bidder) VALUES (:var, :id, :damage, :amount, :available, :cost, :maker, :time, :sold, :earned, :type, :second, :direction, :bidder)");
+            $query = $this->sign->prepare("INSERT INTO sign (var, id, damage, amount, available, cost, maker, sold, earned, direction) VALUES (:var, :id, :damage, :amount, :available, :cost, :maker, :sold, :earned, :direction )");
         else
-            $query = $this->sign->prepare("UPDATE sign SET id = :id, damage = :damage, amount = :amount, available = :available, cost = :cost, maker = :maker, time = :time, sold = :sold, earned = :earned, type = :type, second = :second, direction = :direction, bidder = :bidder WHERE var = :var");
+            $query = $this->sign->prepare("UPDATE sign SET id = :id, damage = :damage, amount = :amount, available = :available, cost = :cost, maker = :maker, sold = :sold, earned = :earned, direction = :direction WHERE var = :var");
         
         $query->bindValue(":var", $var, SQLITE3_TEXT);
-        $query->bindValue(":id", $data["id"], SQLITE3_TEXT);
-        $query->bindValue(":damage", $data["damage"], SQLITE3_TEXT);
-        $query->bindValue(":amount", $data["amount"], SQLITE3_TEXT);
+        $query->bindValue(":id", $data["id"], SQLITE3_INTEGER);
+        $query->bindValue(":damage", $data["damage"], SQLITE3_INTEGER);
+        $query->bindValue(":amount", $data["amount"], SQLITE3_INTEGER);
         $query->bindValue(":available", $data["available"], SQLITE3_TEXT);
-        $query->bindValue(":cost", $data["cost"], SQLITE3_TEXT);
+        $query->bindValue(":cost", $data["cost"], SQLITE3_INTEGER);
         $query->bindValue(":maker", $data["maker"], SQLITE3_TEXT);
-        $query->bindValue(":time", $data["time"], SQLITE3_TEXT);
-        $query->bindValue(":sold", $data["sold"], SQLITE3_TEXT);
-        $query->bindValue(":earned", $data["earned"], SQLITE3_TEXT);
-        $query->bindValue(":type", $data["type"], SQLITE3_TEXT);
-        $query->bindValue(":second", $data["second"], SQLITE3_TEXT);
-        $query->bindValue(":direction", $data["direction"], SQLITE3_TEXT);
-        $query->bindValue(":bidder", $data["bidder"], SQLITE3_TEXT);
+        $query->bindValue(":sold", $data["sold"], SQLITE3_INTEGER);
+        $query->bindValue(":earned", $data["earned"], SQLITE3_INTEGER);
+        $query->bindValue(":direction", $data["direction"], SQLITE3_INTEGER);
         
         $query->execute();
         $query->close();
@@ -146,7 +151,7 @@ class SQLiteProvider{
         if($result instanceof \SQLite3Result){
             $data = $result->fetchArray(SQLITE3_ASSOC);
             $result->finalize();
-            if(isset($data["var"]) and $data["var"] === $var){
+            if(isset($data["var"]) && $data["var"] === $var){
                 unset($data["var"]);
                 $query->close();
                 return $data;
@@ -176,5 +181,4 @@ class SQLiteProvider{
         return false;
     
     }
-
 }
