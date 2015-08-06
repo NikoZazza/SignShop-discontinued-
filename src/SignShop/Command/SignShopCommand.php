@@ -1,29 +1,39 @@
 <?php
 /**
+ * SignShop Copyright (C) 2015 xionbig
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
  * @author xionbig
- * @link http://xionbig.altervista.org/SignShop 
+ * @link http://xionbig.eu/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 1.0.0 
+ * @version 1.1.0
  */
 namespace SignShop\Command;
 
+use SignShop\SignShop;
+use pocketmine\Player;
+use pocketmine\Server;
+use pocketmine\utils\TextFormat;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
+use pocketmine\command\ConsoleCommandSender;
 use pocketmine\command\PluginIdentifiableCommand;
-use pocketmine\utils\TextFormat;
-use pocketmine\Player;
 
 class SignShopCommand extends Command implements PluginIdentifiableCommand{
     private $SignShop;
     private $MessageManager;
     
-    public function __construct($SignShop){
-        parent::__construct("sign", "Command to manage some Sign with virtual-money on the server");
+    public function __construct(SignShop $SignShop){
+        parent::__construct("sign", "Buy and Sell the items using Signs with virtual-money.", "/sign <command> <value>");
         $this->SignShop = $SignShop;
         $this->MessageManager = $SignShop->messageManager();
     }
     
-    public function execute(CommandSender $sender, $label, array $args){
+    public function execute(CommandSender $sender, $label, array $args){       
         $MessageManager = $this->MessageManager;
         $cmds = "";
         
@@ -33,13 +43,13 @@ class SignShopCommand extends Command implements PluginIdentifiableCommand{
         foreach($args as $var){
             $cmds = $cmds. " <".$var.">";
         }
-        $MessageManager->sendMessage($sender, TextFormat::DARK_AQUA."Usage: /sign".$cmds);
+        $MessageManager->send($sender, TextFormat::DARK_AQUA."Usage: /sign".$cmds);
            
         if($sender instanceof Player){
             if(!$this->onCommandUser($sender, $args))
                 return;
             else{
-                if(!$sender->isOp()){
+                if($this->SignShop->getProvider()->getPlayer($sender->getName())["authorized"] != "root" && !$sender->isOp()){
                     $MessageManager->send($sender, "The_command_<@@>_was_not_found!_Use_/sign_help" , $args[0]);
                     return; 
                 }
@@ -105,7 +115,7 @@ class SignShopCommand extends Command implements PluginIdentifiableCommand{
                 
             case "super":
             case "root":
-                if(!($sender instanceof \pocketmine\command\ConsoleCommandSender)){
+                if(!($sender instanceof ConsoleCommandSender)){
                     $MessageManager->send($sender, "This_command_must_be_run_from_the_console");
                     return;
                 }
@@ -140,7 +150,25 @@ class SignShopCommand extends Command implements PluginIdentifiableCommand{
                     $MessageManager->send($sender, "Invalid_arguments");
                 return;
 
+            case "lang":
+                if(!($sender instanceof ConsoleCommandSender)){
+                    $MessageManager->send($sender, "This_command_must_be_run_from_the_console");
+                    return;
+                }
+                if(!isset($args[1]))
+                    $MessageManager->send($sender, "Invalid_arguments");
+                else{
+                    if(!isset($args[2]))
+                        $args[2] = false;
+                    $MessageManager->downloadLang($sender, strtolower(trim($args[1])), $args[2]);
+                }
+                return;
+            
             case "setup":
+                if(!($sender instanceof ConsoleCommandSender)){
+                    $MessageManager->send($sender, "This_command_must_be_run_from_the_console");
+                    return;
+                }
                 if(!isset($args[1])) $args[1] = " ";            
                 $args[1] = strtolower($args[1]);
                     
@@ -150,11 +178,11 @@ class SignShopCommand extends Command implements PluginIdentifiableCommand{
                     $this->SignShop->getSetup()->save();
                     
                     foreach($this->SignShop->getProvider()->getAllPlayers() as $var => $c){
-                        $auth = "unauth";
-                        if($args[1] == "all") $auth = "auth";
+                        $auth = "denied";
+                        if($args[1] == "all") $auth = "allowed";
                                         
-                        if($args[1] == "admin" && $this->SignShop->isOnlinePlayer($var)){
-                            if($this->getPlayer($var) instanceof Player && $this->getPlayer($var)->isOp()) $auth = "auth";                                                     
+                        if($args[1] == "admin" && $this->getPlayer($var) instanceof Player){
+                            if($this->getPlayer($var) instanceof Player && $this->getPlayer($var)->isOp()) $auth = "allowed";                                                     
                         }
                         $get = $this->SignShop->getProvider()->getPlayer($var);
                         $get["authorized"] = $auth;
@@ -167,8 +195,7 @@ class SignShopCommand extends Command implements PluginIdentifiableCommand{
                 return;  
         }   
         $MessageManager->send($sender, "The_command_<@@>_was_not_found!_Use_/sign_help", $args[0]);
-    }
-    
+    }    
     
     public function onCommandUser(CommandSender $sender, array $args){
         $MessageManager = $this->MessageManager;
@@ -179,10 +206,10 @@ class SignShopCommand extends Command implements PluginIdentifiableCommand{
                 case "?":
                 case "h":
                 case "help":
-                        if($sender->isOp())
-                            $sender->sendMessage($this->showHelp(false, true, true));
-                        else
-                            $sender->sendMessage($this->showHelp());                  
+                    if($sender->isOp() || $this->SignShop->getProvider()->getPlayer($sender->getName())["authorized"] == "root")
+                        $sender->sendMessage($this->showHelp(false, true, true));
+                    else
+                        $sender->sendMessage($this->showHelp());                  
                     return;
                     
                 case "echo":
@@ -214,6 +241,11 @@ class SignShopCommand extends Command implements PluginIdentifiableCommand{
                     
                 case "remove":
                     $this->SignShop->temp[$sender->getName()] = ["action" => "remove"];
+                    $MessageManager->send($sender, "Now_touch_on_the_Sign_that_you_want_to_do_this_action");
+                    return;
+                
+                case "empty":
+                    $this->SignShop->temp[$sender->getName()] = ["action" => "empty"];
                     $MessageManager->send($sender, "Now_touch_on_the_Sign_that_you_want_to_do_this_action");
                     return;
                     
@@ -265,12 +297,11 @@ class SignShopCommand extends Command implements PluginIdentifiableCommand{
                     $MessageManager->send($sender, "Invalid_arguments");
                 return;
             }
-            return true;
+            return true;          
         }else
             $MessageManager->send($sender, "You_are_not_authorized_to_run_this_command");
         return;
     }
-    
         
     public function showHelp($cmd = false, $op = false, $plr = false){
         $tag = $this->MessageManager->getTag();
@@ -298,7 +329,9 @@ class SignShopCommand extends Command implements PluginIdentifiableCommand{
                 case "remove":
                     return;
                 case "echo":
-                    return;                
+                    return;    
+                case "empty":
+                    return;
             }
             return str_replace("@@", $args[1], $this->SignShop->messageManager()->getMessage("The_command_<@@>_was_not_found!_Use_/sign_help"));
         }
@@ -311,7 +344,7 @@ class SignShopCommand extends Command implements PluginIdentifiableCommand{
             if($plr)                 
                 $message = $message."\n".$this->showHelp(false, false);
         }else{
-            $var = ["set <amount|available|cost|maker> <value>", "view", "echo <on|off>"];
+            $var = ["set <amount|available|cost|maker> <value>", "view", "echo <on|off>", "empty"];
             foreach($var as $c)
                 $message = $message.$tag.TextFormat::AQUA."/sign ".$c."\n";
         }
@@ -319,8 +352,7 @@ class SignShopCommand extends Command implements PluginIdentifiableCommand{
     }    
 
     public function getPlayer($player){
-        $player = strtolower($player);
-        return \pocketmine\Server::getInstance()->getPlayer($player);
+        return Server::getInstance()->getPlayer(trim($player));
     }  
     
     public function getPlugin() {

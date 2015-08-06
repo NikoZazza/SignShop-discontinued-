@@ -1,18 +1,26 @@
 <?php
 /**
+ * SignShop Copyright (C) 2015 xionbig
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
  * @author xionbig
- * @link http://xionbig.altervista.org/SignShop 
+ * @link http://xionbig.eu/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 1.0.0
+ * @version 1.1.0
  */
 namespace SignShop\Provider;
 
+use SignShop\SignShop;
 use SignShop\Task\TaskPingMySQL;
 
 class MySQLProvider{
     private $database;    
     
-    public function __construct($SignShop){
+    public function __construct(SignShop $SignShop){
         $config = $SignShop->getSetup()->get("dataProviderSettings");
                 
         if(!isset($config["host"]) or !isset($config["user"]) or !isset($config["password"]) or !isset($config["database"])){
@@ -28,10 +36,17 @@ class MySQLProvider{
             $SignShop->getServer()->shutdown();
             return;
 	}
-	
-        $this->database->query('CREATE TABLE IF NOT EXISTS sign (var varchar(255), id int(4), damage int(2), amount int(10), available varchar(255), cost varchar(255), maker varchar(255), sold int(255), earned int(255), direction int(10))');
+        
+        $this->database->query('CREATE TABLE IF NOT EXISTS sign (var varchar(255), id int(5), damage int(5), amount int(2), available varchar(15), cost int(15), maker varchar(255), sold int(50), earned int(50), direction int(2), type VARCHAR(4) DEFAULT "buy", need INT(15))');
         $this->database->query('CREATE TABLE IF NOT EXISTS plr (player varchar(255), authorized varchar(10), changed int(15), echo varchar(6))'); 
-		
+	
+        if($SignShop->getSetup()->get("version") != "oneone"){
+            $this->database->query("ALTER TABLE sign ADD type VARCHAR(4) DEFAULT 'buy', need INT(15)");
+            
+            $SignShop->getSetup()->set("version", "oneone");
+        }
+        
+        
         $SignShop->getServer()->getScheduler()->scheduleRepeatingTask(new TaskPingMySQL($SignShop), 600);
     }
     
@@ -101,9 +116,9 @@ class MySQLProvider{
     public function setSign($var, array $data){
         $var = trim($var);
         if(!$this->existsSign($var))        
-            $this->database->query("INSERT INTO sign (var, id, damage, amount, available, cost, maker, sold, earned, direction) VALUES ('".$this->database->escape_string($var)."' , ".intval($data["id"])." , ".intval($data["damage"])." , ".intval($data["amount"])." , '".$this->database->escape_string($data["available"])."' , ".intval($data["cost"])." , '".$this->database->escape_string($data["maker"])."' , ".intval($data["sold"])." , ".intval($data["earned"])." , ".intval($data["direction"])." )");
+            $this->database->query("INSERT INTO sign (var, id, damage, amount, available, cost, maker, sold, earned, direction, need, type) VALUES ('".$this->database->escape_string($var)."' , ".intval($data["id"])." , ".intval($data["damage"])." , ".intval($data["amount"])." , '".$this->database->escape_string($data["available"])."' , ".intval($data["cost"])." , '".$this->database->escape_string($data["maker"])."' , ".intval($data["sold"])." , ".intval($data["earned"])." , ".intval($data["direction"]).", '".intval($data["need"])."', '".$this->database->escape_string($data["available"])."' )");
         else 
-            $this->database->query("UPDATE sign SET id = ".intval($data["id"]).", damage = ".intval($data["damage"]).", amount = ".intval($data["amount"]).", available = '".$this->database->escape_string($data["available"])."', cost = ".intval($data["cost"]).", maker = '".$this->database->escape_string($data["maker"])."', sold = ".intval($data["sold"]).", earned = ".intval($data["earned"]).", direction = ".intval($data["direction"])." WHERE var = '".$this->database->escape_string($var)."'");        
+            $this->database->query("UPDATE sign SET id = ".intval($data["id"]).", damage = ".intval($data["damage"]).", amount = ".intval($data["amount"]).", available = '".$this->database->escape_string($data["available"])."', cost = ".intval($data["cost"]).", maker = '".$this->database->escape_string($data["maker"])."', sold = ".intval($data["sold"]).", earned = ".intval($data["earned"]).", direction = ".intval($data["direction"]).", need = ".intval($data["need"]).", type = '".$this->database->escape_string($data["available"])."' WHERE var = '".$this->database->escape_string($var)."'");        
     }
     
     public function getSign($var){        
@@ -135,6 +150,7 @@ class MySQLProvider{
     }
     
     public function onDisable(){
-        $this->database->close();
+        if($this->database instanceof \mysqli)
+            $this->database->close();
     }
 }

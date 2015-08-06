@@ -1,40 +1,48 @@
 <?php
 /**
+ * SignShop Copyright (C) 2015 xionbig
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
  * @author xionbig
- * @link http://xionbig.altervista.org/SignShop 
+ * @link http://xionbig.eu/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 1.0.0 
+ * @version 1.1.0
  */
 namespace SignShop\EventListener;
 
+use SignShop\SignShop;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerRespawnEvent;
 
 class PlayerSpawnEvent implements Listener{
-    protected $SignShop;
+    private $SignShop;
     
-    public function __construct($SignShop){
+    public function __construct(SignShop $SignShop){
         $this->SignShop = $SignShop; 
     }        
     
     public function playerSpawn(PlayerRespawnEvent $event){
         $player = $event->getPlayer();
-        
+              
         $authorized = "denied";
         
         if($this->SignShop->getSetup()->get("signCreated") == "admin" && $player->isOp()) $authorized = "allow";            
         if($this->SignShop->getSetup()->get("signCreated") == "all") $authorized = "allow";
             
-        if($this->SignShop->getProvider()->existsPlayer($player->getDisplayName())){
-            $get = $this->SignShop->getProvider()->getPlayer($player->getDisplayName());
+        if($this->SignShop->getProvider()->existsPlayer($player->getName())){
+            $get = $this->SignShop->getProvider()->getPlayer($player->getName());
             
             if($get["changed"] < $this->SignShop->getSetup()->get("lastChanged")){
                 $get["authorized"] = $authorized;
                 $get["changed"] = time();
-                $this->SignShop->getProvider()->setPlayer($player->getDisplayName(), $get);
+                $this->SignShop->getProvider()->setPlayer($player->getName(), $get);
             }
         }else{
-            $this->SignShop->getProvider()->setPlayer($player->getDisplayName(), [
+            $this->SignShop->getProvider()->setPlayer($player->getName(), [
                 "authorized" => $authorized,
                 "changed" => time(),
                 "echo" => true]);

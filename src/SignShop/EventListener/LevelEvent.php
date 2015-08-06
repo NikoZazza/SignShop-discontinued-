@@ -12,21 +12,20 @@
  * @link http://forums.pocketmine.net/plugins/signshop.668/
  * @version 1.1.0
  */
-namespace SignShop\Task;
+namespace SignShop\EventListener;
 
 use SignShop\SignShop;
-use pocketmine\scheduler\PluginTask;
+use pocketmine\event\Listener;
+use pocketmine\event\level\LevelLoadEvent;
 
-class TaskPingMySQL extends PluginTask{
+class LevelEvent implements Listener{
     private $SignShop;
-        
-    public function __construct(SignShop $SignShop){
-        parent::__construct($SignShop);
-	
-        $this->SignShop = $SignShop;
+    
+    public function __construct(SignShop $SignShop) {
+        $this->SignShop = $SignShop;        
     }
-        
-    public function onRun($currentTick){
-        $this->SignShop->getProvider()->ping();
-    }
+    
+    public function levelLoad(LevelLoadEvent $event){
+        $this->SignShop->getSignManager()->reload($event->getLevel()->getName());
+    }    
 }

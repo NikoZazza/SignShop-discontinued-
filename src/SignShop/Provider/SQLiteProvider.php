@@ -1,16 +1,25 @@
 <?php
 /**
+ * SignShop Copyright (C) 2015 xionbig
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
  * @author xionbig
- * @link http://xionbig.altervista.org/SignShop 
+ * @link http://xionbig.eu/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 1.0.0
+ * @version 1.1.0
  */
 namespace SignShop\Provider;
+
+use SignShop\SignShop;
 
 class SQLiteProvider {
     private $plr, $sign;
     
-    public function __construct($SignShop){      
+    public function __construct(SignShop $SignShop){      
         if(file_exists($SignShop->getDataFolder()."/resources/player.db"))
             $this->plr = new \SQLite3($SignShop->getDataFolder()."/resources/player.db", SQLITE3_OPEN_READWRITE);
         else
@@ -21,10 +30,15 @@ class SQLiteProvider {
         else
             $this->sign = new \SQLite3($SignShop->getDataFolder()."/resources/sign.db", SQLITE3_OPEN_CREATE|SQLITE3_OPEN_READWRITE);
                       
-        $this->sign->exec('CREATE TABLE IF NOT EXISTS sign (var VARCHAR(255) PRIMARY KEY, id INT(4), damage INT(2), amount INT(10)), available VARCHAR(255), cost INT(255), maker VARCHAR(255), sold INT(255), earned INT(255), direction INT(10))');
+        $this->sign->exec('CREATE TABLE IF NOT EXISTS sign (var varchar(255), id int(5), damage int(5), amount int(2), available varchar(15), cost int(15), maker varchar(255), sold int(50), earned int(50), direction int(2), type VARCHAR(4) DEFAULT "buy", need INT(15))');
         $this->plr->exec('CREATE TABLE IF NOT EXISTS plr (player varchar(255), authorized varchar(10), changed int(15), echo varchar(6))');
-       
-        if($SignShop->getSetup()->get("version") != "one"){
+                   
+        if($SignShop->getSetup()->get("version") != "oneone"){
+            
+            $this->sign->exec("ALTER TABLE sign ADD type VARCHAR(4) DEFAULT 'buy', need INT(15)");
+           
+            $SignShop->getSetup()->set("version", "oneone");
+        
             foreach($this->getAllPlayers() as $var => $c){
                 if($c["authorized"] == "super") $c["authorized"] = "root";
                 elseif($c["authorized"] == "auth") $c["authorized"] = "allow";
@@ -45,9 +59,10 @@ class SQLiteProvider {
     
     public function getAllPlayers(){
         $return = [];
-        $query = $this->plr->query("SELECT * FROM plr WHERE 1");
+        $query = $this->plr->prepare("SELECT * FROM plr WHERE 1");
+        $result = $query->execute();
         if($result instanceof \SQLite3Result){
-            while($data = $query->fetchArray(SQLITE3_ASSOC))
+            while($data = $result->fetchArray(SQLITE3_ASSOC))
                 $return[$data["player"]] = $data;
             
             $query->finalize();
@@ -112,20 +127,22 @@ class SQLiteProvider {
     
     public function getAllSigns(){
         $return = [];
-        $query = $this->sign->query("SELECT * FROM sign WHERE 1");
+        $query = $this->sign->prepare("SELECT * FROM sign WHERE 1");
+        $result = $query->execute();
         if($result instanceof \SQLite3Result){
-            while($data = $query->fetchArray(SQLITE3_ASSOC))
+            while($data = $result->fetchArray(SQLITE3_ASSOC))
                 $return[$data["var"]] = $data;
         }
-        $query->finalize();
+        $result->finalize();
+        $query->close();
         return $return;
     }
     
     public function setSign($var, array $data){
         if(!$this->existsSign($var))        
-            $query = $this->sign->prepare("INSERT INTO sign (var, id, damage, amount, available, cost, maker, sold, earned, direction) VALUES (:var, :id, :damage, :amount, :available, :cost, :maker, :sold, :earned, :direction )");
+            $query = $this->sign->prepare("INSERT INTO sign (var, id, damage, amount, available, cost, maker, sold, earned, direction, need, type) VALUES (:var, :id, :damage, :amount, :available, :cost, :maker, :sold, :earned, :direction, :need, :type )");
         else
-            $query = $this->sign->prepare("UPDATE sign SET id = :id, damage = :damage, amount = :amount, available = :available, cost = :cost, maker = :maker, sold = :sold, earned = :earned, direction = :direction WHERE var = :var");
+            $query = $this->sign->prepare("UPDATE sign SET id = :id, damage = :damage, amount = :amount, available = :available, cost = :cost, maker = :maker, sold = :sold, earned = :earned, direction = :direction, need = :need, type = :type WHERE var = :var");
         
         $query->bindValue(":var", $var, SQLITE3_TEXT);
         $query->bindValue(":id", $data["id"], SQLITE3_INTEGER);
@@ -137,6 +154,8 @@ class SQLiteProvider {
         $query->bindValue(":sold", $data["sold"], SQLITE3_INTEGER);
         $query->bindValue(":earned", $data["earned"], SQLITE3_INTEGER);
         $query->bindValue(":direction", $data["direction"], SQLITE3_INTEGER);
+        $query->bindValue(":need", $data["need"], SQLITE3_INTEGER);
+        $query->bindValue(":type", $data["type"], SQLITE3_TEXT);
         
         $query->execute();
         $query->close();
@@ -171,8 +190,10 @@ class SQLiteProvider {
     }
     
     public function onDisable(){
-        $this->plr->close();
-        $this->sign->close();        
+        if($this->plr instanceof \SQLite3)
+            $this->plr->close();
+        if($this->sign instanceof \SQLite3)
+            $this->sign->close();        
     }
 
     public function existsSign($var){

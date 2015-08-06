@@ -1,30 +1,40 @@
 <?php
 /**
+ * SignShop Copyright (C) 2015 xionbig
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
  * @author xionbig
- * @link http://xionbig.altervista.org/SignShop 
+ * @link http://xionbig.eu/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 1.0.0
+ * @version 1.1.0
  */
 namespace SignShop\Manager;
 
-use pocketmine\level\Position;
+use SignShop\SignShop;
 use pocketmine\Server;
+use pocketmine\nbt\tag\Int;
+use pocketmine\nbt\tag\String;
 use pocketmine\level\Level;
+use pocketmine\level\Position;
 use pocketmine\item\Item;
 use pocketmine\block\Block;
 use pocketmine\tile\Sign;
-use pocketmine\nbt\tag\Compound;
-use pocketmine\nbt\tag\String;
-use pocketmine\nbt\tag\Int;
 use pocketmine\tile\Tile;
+use pocketmine\nbt\tag\Compound;
+use pocketmine\utils\TextFormat;
 
-class SignManager {
+class SignManager{
     private $SignShop;
     private $signs = [];    
     
-    public function __construct($SignShop) {
+    public function __construct(SignShop $SignShop){
         $this->SignShop = $SignShop;
-        if(count($SignShop->getProvider()->getAllSigns()) <= 0) return;
+        if(count($SignShop->getProvider()->getAllSigns()) <= 0) 
+            return;
         foreach($SignShop->getProvider()->getAllSigns() as $var => $c){
             $pos = explode(":", $var);
             $this->signs[$this->getWorld($pos[3])][$pos[0].":".$pos[1].":".$pos[2]] = true;            
@@ -54,9 +64,9 @@ class SignManager {
             $this->signs[$this->getWorld($pos->getLevel()->getName())][$pos->getX().":".$pos->getY().':'.$pos->getZ()] = true;
             ksort($this->signs[$this->getWorld($pos->getLevel()->getName())]);    
         }
-        $this->spawnSign($pos, $get);
         
         $this->SignShop->getProvider()->setSign($this->getTextPos($pos), $get);
+        $this->spawnSign($pos, $get);
     } 
     
     private function getWorld($world){
@@ -68,52 +78,70 @@ class SignManager {
         return $this->SignShop->getProvider()->getSign($this->getTextPos($pos));
     }
     
-    private function spawnSign(Position $pos, $get = false){
+    public function spawnSign(Position $pos, $get = false){
         if(!$get || !isset($get))
-            $get = $this->SignShop->getProvider()->getSign($this->getTextPos($pos));            
+            $get = $this->SignShop->getProvider()->getSign($this->getTextPos($pos));     
         
-        if($get["available"] != "unlimited" && $get["available"] - $get["amount"] <= 0)
-            $get["cost"] = "Out Of Stock";
-        else{
-            if($get["cost"] == 0) 
-                $get["cost"] = "Price: FREE";
-            else 
-                $get["cost"] = "Price: ".$get["cost"].$this->SignShop->getMoneyManager()->getValue();
-        }    
-        if(!$pos->level->isChunkGenerated($pos->x >> 4, $pos->z >> 4)) 
-            $pos->level->generateChunk($pos->x, $pos->z);
-        
-        if($pos->level->getBlockIdAt($pos->x, $pos->y, $pos->z) != Item::SIGN_POST || $pos->level->getBlockIdAt($pos->x, $pos->y, $pos->z) != Item::WALL_SIGN){
-            if($pos->level->getBlockIdAt($pos->x, $pos->y-1, $pos->z) != Item::AIR)
+        if($pos->level->getBlockIdAt($pos->x, $pos->y, $pos->z) != Item::SIGN_POST && $pos->level->getBlockIdAt($pos->x, $pos->y, $pos->z) != Item::WALL_SIGN){
+            if($pos->level->getBlockIdAt($pos->x, $pos->y - 1, $pos->z) != Item::AIR && $pos->level->getBlockIdAt($pos->x, $pos->y - 1, $pos->z) != Item::WALL_SIGN)
                 $pos->level->setBlock($pos, Block::get(Item::SIGN_POST, $get["direction"]), false, true);
-            else
-                $pos->level->setBlock($pos, Block::get(Item::WALL_SIGN), false, true);
+            else{
+                $direction = 3;
+                if($pos->level->getBlockIdAt($pos->x - 1 , $pos->y, $pos->z) != Item::AIR)
+                    $direction = 5;
+                elseif($pos->level->getBlockIdAt($pos->x + 1 , $pos->y, $pos->z) != Item::AIR)
+                    $direction = 4;
+                elseif($pos->level->getBlockIdAt($pos->x , $pos->y, $pos->z + 1) != Item::AIR)
+                    $direction = 2;                      
+                $pos->level->setBlock($pos, Block::get(Item::WALL_SIGN, $direction), false, true);    
+            }            
+        }            
+        
+        if($get["type"] == "sell"){
+            if($get["need"] == -1)
+                $get["need"] = "∞";
+            $line = [TextFormat::GOLD."[SignSell]", 
+                    TextFormat::ITALIC.$this->SignShop->getItems()->getName($get["id"], $get["damage"]), 
+                    $get["available"]."/".$get["need"], 
+                    $get["cost"].$this->SignShop->getMoneyManager()->getValue().TextFormat::BLACK." for ".$get["amount"]
+                ];
+        }else{
+            if($get["available"] != "unlimited" && $get["available"] - $get["amount"] <= 0)
+                $get["cost"] = TextFormat::DARK_RED."Out Of Stock";
+            else{
+                if($get["cost"] == 0) 
+                    $get["cost"] = "Price: "."FREE";
+                else 
+                    $get["cost"] = "Price: ".$get["cost"].$this->SignShop->getMoneyManager()->getValue();
+            }   
             
+            $line = [TextFormat::GOLD."[SignBuy]", 
+                    TextFormat::ITALIC.$this->SignShop->getItems()->getName($get["id"], $get["damage"]),
+                    "Amount: x".$get["amount"],
+                    $get["cost"]
+                ];
         }
-            
         
         $tile = $pos->getLevel()->getTile($pos); 
-
-        if($tile instanceof Sign){
-            $tile->setText("[SignShop]", $this->SignShop->getItems()->getName($get["id"], $get["damage"]), "Amount: x".$get["amount"], $get["cost"]);
+        if($tile instanceof Sign){            
+            $tile->setText(... $line);
             return;
         }
-          
+        
         $sign = new Sign($pos->level->getChunk($pos->x >> 4, $pos->z >> 4, true), new Compound(false, array(
             new Int("x", $pos->x),
             new Int("y", $pos->y),
             new Int("z", $pos->z),
             new String("id", Tile::SIGN),
-            new String("Text1", "[SignShop]"),
-            new String("Text2", $this->SignShop->getItems()->getName($get["id"], $get["damage"])),
-            new String("Text3", "Amount: x".$get["amount"]),
-            new String("Text4", $get["cost"])
-            )));      
-        $pos->level->addTile($sign);
-        
+            new String("Text1", $line[0]),
+            new String("Text2", $line[1]),
+            new String("Text3", $line[2]),
+            new String("Text4", $line[3])
+            )));               
     }   
     
     private function getTextPos(Position $pos){
+        $pos = $this->getPos($pos);
         return $pos->getX().":".$pos->getY().":".$pos->getZ().":".$this->getWorld($pos->getLevel()->getName());
     } 
         
@@ -127,11 +155,10 @@ class SignManager {
     
     public function reload($world = false){
         if(count($this->signs) <= 0) return false;
-        $world = trim($world);
-        if(!$world || $world == ""){
+
+        if(empty($world)){
             foreach($this->signs as $world => $var){
-                $world = str_replace("%", " ", $world);
-                $world = Server::getInstance()->getLevelByName($world);
+                $world = Server::getInstance()->getLevelByName(str_replace("%", " ", $world));
                 if($world instanceof Level){
                     foreach($var as $pos => $c){
                         $t = explode(":", $pos);
@@ -140,6 +167,19 @@ class SignManager {
                 }  
             }   
             return true;
+        }else{            
+            $world = Server::getInstance()->getLevelByName(str_replace("%", " ", trim($world)));
+            foreach($this->signs[$world] as $world => $var){                
+                foreach($var as $pos => $c){
+                    $t = explode(":", $pos);
+                    $this->spawnSign(new Position($t[0], $t[1], $t[2], $world));                
+                }              
+                  
+            }
         }
+    }
+    
+    public function onDisable(){
+        unset($this->signs);
     }
 }

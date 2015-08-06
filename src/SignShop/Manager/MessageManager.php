@@ -1,18 +1,29 @@
 <?php
 /**
+ * SignShop Copyright (C) 2015 xionbig
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
  * @author xionbig
- * @link http://xionbig.altervista.org/SignShop 
+ * @link http://xionbig.eu/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 1.0.0
+ * @version 1.1.0
  */
 namespace SignShop\Manager;
 
+use SignShop\SignShop;
 use pocketmine\Player;
 use pocketmine\utils\Config;
 use pocketmine\utils\TextFormat;
+use pocketmine\command\CommandSender;
 
 class MessageManager{    
     private $SignShop;
+    private $tag = TextFormat::GOLD."[SignShop] ";
+    private $dataResources;
     
     private $message = [
         "The_Signs_in_the_world_@@_have_been_put_back" => ["message" => "", "alert" => "success"],
@@ -61,7 +72,7 @@ class MessageManager{
         "Now_this_Sign_is_owned_by_@@" => ["message" => "", "alert" => "success"],
         "You_can_not_buy_from_your_Sign" => ["message" => "", "alert" => "error"],
         "payment_from_@@" => ["message" => "", "alert" => "info"],
-        "You_can_not_buy_in_creative" => ["message" => "", "alert" => "error"],
+        "You_can_not_buy_or_sell_in_creative" => ["message" => "", "alert" => "error"],
         "Now_this_Sign_has_the_unlimited_available" => ["message" => "", "alert" => "success"],
         "You_do_not_have_enough_money" => ["message" => "", "alert" => "warning"],
         "The_content_of_the_Sign_is_sold_out" => ["message" => "", "alert" => "warning"],
@@ -69,47 +80,55 @@ class MessageManager{
         "You_do_not_have_the_space_to_buy_the_contents_of_this_Sign" => ["message" => "", "alert" => "warning"],
         "This_command_must_be_run_from_the_console" => ["message" => "", "alert" => "warning"],
         "You_can_not_create_the_Signs_from_the_creative_mode" => ["message" => "", "alert" => "warning"],        
-        "You_need_space_to_get_the_items_from_the_Sign" => ["message" => "", "alert" => "warning"],        
+        "You_need_space_to_get_the_items_from_the_Sign" => ["message" => "", "alert" => "warning"],
+        "The_amount_must_be_less_than_@@" => ["message" => "", "alert" => "error"],
+        "This_sign_is_not_registered" => ["message" => "", "alert" => "warning"],
+        "You_do_not_have_enough_space_to_get_the_contents_of_the_Sign" => ["message" => "", "alert" => "warning"],
+        "You_have_successfully_sold_the_items" => ["message" => "", "alert" => "success"],
+        "The_Sign_is_full" => ["message" => "", "alert" => "warning"],
+        "The_Sign_is_empty" => ["message" => "", "alert" => "warning"],
+        "The_Sign_has_been_emptied_successfully" => ["message" => "", "alert" => "success"],
+        "This_feature_is_not_yet_available_for_SignSell" =>  ["message" => "", "alert" => "error"],
+        "The_amount_of_the_Sign_is_unlimited" => ["message" => "", "alert" => "warning"],
+        "You_can_not_sell_your_items_to_your_Sign,_if_you_want_you_can_empty_it_executing_the_command_/sign_empty" => ["message" => "", "alert" => "error"],
+        "The_maker_of_Sign_does_not_have_enough_money_to_give_you_the_money" => ["message" => "", "alert" => "error"],
     ];
-    private $tag;
     
-    public function __construct($SignShop, $dataResources){
+    public function __construct(SignShop $SignShop, $dataResources){
         $this->SignShop = $SignShop;
-        $this->tag = TextFormat::GOLD."[SignShop] ";
-       
-        $continue = false;
-        if(file_exists($dataResources. "messages.yml")){
-            $c = new Config($dataResources. "messages.yml", Config::YAML);
-            $this->mex = $c->getAll();
-            if(isset($this->mex["version_mex"])){
-                if($this->mex["version_mex"] != "one")
-                    $this->getLogger()->info(TextFormat::RED."Please update the file messages.yml");
-                else
-                    $continue = true;
-            }else
-                $SignShop->getServer()->getLogger()->info(TextFormat::RED."Please update file messages.yml");            
+        
+        $file_message = new Config($dataResources. "messages.yml", Config::YAML, $this->message);
+        $this->dataResources = $dataResources;
+        if($file_message->get("version_mex") != "oneone"){
+            $SignShop->getServer()->getLogger()->info(TextFormat::RED."Please update the file messages.yml");            
         }
-               
-        if($continue == false){            
-            foreach($this->message as $var => $c){
+        
+        foreach($this->message as $var => $c){
+            if($file_message->exists($var) && isset($file_message->get($var)["message"]) && !empty($file_message->get($var)["message"]))
+                $c = $file_message->get($var)["message"];
+            else
                 $c = str_replace("_", " ", $var);
-                $this->message[$var]["message"] = $c;
-            }                    
+            $this->message[$var]["message"] = $c;                    
         }
+        $this->message["version_mex"] = "oneone";
+        $file_message->setAll($this->message);
+        $file_message->save();
     }
     
     public function send($player, $message, $toReplace = ""){
         if(!($player instanceof Player)){
-            if(!($player instanceof \pocketmine\command\CommandSender))
+            if(!($player instanceof CommandSender))
                 return;
         }
         
         $message = trim($message);
-        $message = str_replace(" ", "_", $message);
-         
-        if(!isset($this->message[$message]) || $this->message[$message] == "")
-            return;
+        $smessage = str_replace(" ", "_", $message);
         
+        if(!isset($this->message[$message]) || $this->message[$message]["message"] == ""){
+            $player->sendMessage($this->tag.$this->getColor("").$message);
+            return;
+        } 
+        $message = $smessage;
         $alert = $this->getColor($this->message[$message]["alert"]);
         $message = $this->message[$message]["message"];
         
@@ -118,24 +137,69 @@ class MessageManager{
             $message = str_replace("@@", $toReplace, $message);
         $player->sendMessage($this->tag.$alert.$message);
     }
-    
-    public function sendMessage($player, $message){
-        if(!($player instanceof Player)){
-            if(!($player instanceof \pocketmine\command\CommandSender))
+        
+    public function downloadLang($player, $lang, $passwd = false){
+        $player->sendMessage($this->tag.$this->getColor("warning")."Connecting to the server");
+        if($lang == "en"){
+            $player->sendMessage($this->tag.$this->getColor("warning")."Restore the original language...");
+            foreach($this->message as $var => $c){
+                $array[$var] = str_replace("_", " ", $var);
+            }
+        }else{   
+            $url = $this->SignShop->getSetup()->get("server")."?lang=".$lang."&password=".$passwd."&version=".$this->SignShop->getSetup()->get("version");
+            $array = json_decode($this->url_get_contents($url), false, 512, JSON_UNESCAPED_UNICODE);
+            if(count($array) < 1){
+                $player->sendMessage($this->tag.$this->getColor("error")."Server not found");  
                 return;
+            }
         }
-        
-        $message = trim($message);
-        
-        $player->sendMessage($this->tag.$message);
+        foreach($array as $var => $c){            
+            if($var != "_empty_"){
+                if(!isset($this->message[$var]["alert"]))
+                    $alert = "";
+                else
+                    $alert = $this->message[$var]["alert"];
+                $this->message[$var] = ["message" => trim($c), "alert" => $alert];
+            
+            }
+            if(trim($c) == "" && $var != "_empty_"){
+                if(strlen($lang) > 2)
+                    $player->sendMessage($this->tag.$this->getColor("error")."The user or password is incorrect");  
+                else
+                    $player->sendMessage($this->tag.$this->getColor("error")."The language '$lang' was not found");  
+                return;
+            }
+        }         
+        $file_message = new Config($this->dataResources. "messages.yml", Config::YAML, $this->message);
+        $file_message->setAll($this->message);
+        $file_message->save();
+        $player->sendMessage($this->tag.$this->getColor("success")."Language Packs successfully downloaded");
     }
+    
+    private function url_get_contents($url) {
+        if(function_exists('curl_exec')){ 
+            $conn = curl_init($url);
+            curl_setopt($conn, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($conn, CURLOPT_FRESH_CONNECT,  true);
+            curl_setopt($conn, CURLOPT_RETURNTRANSFER, 1);
+            $url_get_contents_data = (curl_exec($conn));
+            curl_close($conn);
+        }elseif(function_exists('file_get_contents'))
+            $url_get_contents_data = file_get_contents($url);
+        elseif(function_exists('fopen') && function_exists('stream_get_contents')){
+            $handle = fopen ($url, "r");
+           $url_get_contents_data = stream_get_contents($handle);
+        }else
+            $url_get_contents_data = false;
+        return $url_get_contents_data;
+    } 
     
     public function getMessage($message){
         $message = strtolower(trim($message));
         if(isset($this->message[$message]))
             return $this->getColor($this->message[$message]["alert"]).$this->message[$message]["message"];
         else
-            return " ";
+            return $message;
     }
     
     public function getTag(){
@@ -144,6 +208,8 @@ class MessageManager{
     
     public function getColor($var){
         switch($var){
+            case "success":
+                return TextFormat::DARK_GREEN;
             case "error":
                 return TextFormat::RED;
             case "warning":

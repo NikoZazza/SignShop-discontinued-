@@ -1,19 +1,26 @@
 <?php
 /**
+ * SignShop Copyright (C) 2015 xionbig
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
  * @author xionbig
- * @link http://xionbig.altervista.org/SignShop 
+ * @link http://xionbig.eu/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 1.0.0
+ * @version 1.1.0
  */
 namespace SignShop\Manager;
 
+use SignShop\SignShop;
 use pocketmine\plugin\Plugin;
-use pocketmine\utils\TextFormat;
 
 class MoneyManager{
     private $PocketMoney = false, $EconomyS = false, $MassiveEconomy = false;
         
-    public function __construct($SignShop){        
+    public function __construct(SignShop $SignShop){        
         if($SignShop->getServer()->getPluginManager()->getPlugin("PocketMoney") instanceof Plugin){
             $version = explode(".", $SignShop->getServer()->getPluginManager()->getPlugin("PocketMoney")->getDescription()->getVersion());
             if($version[0] < 4){
@@ -45,6 +52,7 @@ class MoneyManager{
         if($this->PocketMoney) return "pm";
         if($this->EconomyS) return "$";
         if($this->MassiveEconomy) return $this->MassiveEconomy->getMoneySymbol();
+        return "?";
     }    
     
     public function getMoney($player){
@@ -58,6 +66,13 @@ class MoneyManager{
         if($this->PocketMoney) $this->PocketMoney->setMoney($player, $this->getMoney($player) + $value);
         elseif($this->EconomyS) $this->EconomyS->setMoney($player, $this->getMoney($player) + $value);
         elseif($this->MassiveEconomy) $this->MassiveEconomy->setMoney($player, $this->getMoney($player) + $value);
-        else return;
+        return false;
+    }
+    
+    public function isExists($player){
+        if($this->PocketMoney) return $this->PocketMoney->accountExists($player);
+        elseif($this->EconomyS) return $this->EconomyS->isRegistered($player);
+        elseif($this->MassiveEconomy) return $this->MassiveEconomy->isPlayerRegistered($player);
+        return false;
     }
 }

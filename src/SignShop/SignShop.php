@@ -1,33 +1,44 @@
 <?php
 /**
+ * SignShop Copyright (C) 2015 xionbig
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
  * @author xionbig
- * @link http://xionbig.altervista.org/SignShop 
+ * @link http://xionbig.eu/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 1.0.0
+ * @version 1.1.0
  */
 namespace SignShop;
 
 use pocketmine\event\Listener;
 use pocketmine\plugin\PluginBase;
-use pocketmine\utils\TextFormat;
 use pocketmine\utils\Config;
+use pocketmine\utils\TextFormat;
+use Provider\MySQLProvider;
+use Provider\SQLiteProvider;
+use Provider\YAMLProvider;
 
 class SignShop extends PluginBase implements Listener{ 
     public $temp = [];
     private $setup, $provider;
     private $manager = [];    
-        
+    
     public function onEnable(){
         $dataResources = $this->getDataFolder()."/resources/";
-        if (!file_exists($this->getDataFolder())) 
+        if(!file_exists($this->getDataFolder())) 
             @mkdir($this->getDataFolder(), 0755, true);
-        if (!file_exists($dataResources)) 
+        if(!file_exists($dataResources)) 
             @mkdir($dataResources, 0755, true);
         
         $this->setup = new Config($dataResources. "config.yml", Config::YAML, [
-                "version" => "one",
+                "version" => "oneone",
                 "signCreated" => "all",
                 "lastChange" => time(),
+                "server" => "http://xionbig.eu/plugins/SignShop/translate/download.php",
                 "dataProvider" => "YAML",
                 "dataProviderSettings" => ["host" => "127.0.0.1",         
                                             "port" => 3306,
@@ -37,6 +48,7 @@ class SignShop extends PluginBase implements Listener{
             ]);
         if($this->setup->get("signCreated") == "list")
             $this->setup->set("signCreated", "admin");
+        
         $this->setup->save();
         
         switch(strtolower($this->setup->get("dataProvider"))){           
@@ -54,8 +66,8 @@ class SignShop extends PluginBase implements Listener{
                 $this->provider = new Provider\MySQLProvider($this);
                 break;
             default:
-                $this->getLogger()->info(TextFormat::RED."The field 'dataProvider' in config.yml is incorrect!"); 
-                $this->getServer()->shutdown();
+                $this->getLogger()->critical("The field 'dataProvider' in config.yml is incorrect! Use the provider YAML"); 
+                $this->provider = new Provider\YAMLProvider($this);
         }
         
         $this->manager["message"] = new Manager\MessageManager($this, $dataResources);
@@ -65,11 +77,13 @@ class SignShop extends PluginBase implements Listener{
         $this->manager["sign"] = new Manager\SignManager($this);
 
         $this->getServer()->getCommandMap()->register("sign", $this->manager["command"]);
-
+        
+        $this->getServer()->getPluginManager()->registerEvents(new EventListener\LevelEvent($this), $this);
         $this->getServer()->getPluginManager()->registerEvents(new EventListener\PlayerSpawnEvent($this), $this);
         $this->getServer()->getPluginManager()->registerEvents(new EventListener\PlayerTouchEvent($this), $this);
         $this->getServer()->getPluginManager()->registerEvents(new EventListener\PlayerBlockBreakEvent($this), $this);
         $this->getServer()->getPluginManager()->registerEvents(new EventListener\PlayerSignCreateEvent($this), $this);
+        $this->getServer()->getLogger()->info(TextFormat::GOLD."SignShop v".$this->getDescription()->getVersion()." Enabled!");
     }
     
     public function messageManager(){
@@ -96,7 +110,11 @@ class SignShop extends PluginBase implements Listener{
     }
              
     public function onDisable(){
-        $this->setup->save();
-        $this->provider->onDisable();
+        unset($this->temp);
+        if($this->setup instanceof Config)
+            $this->setup->save();
+        if($this->provider instanceof MySQLProvider || $this->provider instanceof SQLiteProvider || $this->provider instanceof YAMLProvider) 
+            $this->provider->onDisable();
+        $this->getSignManager()->onDisable();
     }
 }
