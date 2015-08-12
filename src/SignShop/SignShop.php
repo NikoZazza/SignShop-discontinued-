@@ -8,7 +8,7 @@
  * (at your option) any later version.
  * 
  * @author xionbig
- * @link http://xionbig.eu/plugins/SignShop 
+ * @link http://xionbig.netsons.org/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
  * @version 1.1.0
  */
@@ -38,7 +38,7 @@ class SignShop extends PluginBase implements Listener{
                 "version" => "oneone",
                 "signCreated" => "all",
                 "lastChange" => time(),
-                "server" => "http://xionbig.eu/plugins/SignShop/translate/download.php",
+                "server1" => "http://xionbig.netsons.org/plugins/SignShop/translate/download.php",
                 "dataProvider" => "YAML",
                 "dataProviderSettings" => ["host" => "127.0.0.1",         
                                             "port" => 3306,
@@ -77,7 +77,6 @@ class SignShop extends PluginBase implements Listener{
         $this->manager["sign"] = new Manager\SignManager($this);
 
         $this->getServer()->getCommandMap()->register("sign", $this->manager["command"]);
-        
         $this->getServer()->getPluginManager()->registerEvents(new EventListener\LevelEvent($this), $this);
         $this->getServer()->getPluginManager()->registerEvents(new EventListener\PlayerSpawnEvent($this), $this);
         $this->getServer()->getPluginManager()->registerEvents(new EventListener\PlayerTouchEvent($this), $this);

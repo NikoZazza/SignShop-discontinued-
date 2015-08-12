@@ -8,7 +8,7 @@
  * (at your option) any later version.
  * 
  * @author xionbig
- * @link http://xionbig.eu/plugins/SignShop 
+ * @link http://xionbig.netsons.org/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
  * @version 1.1.0
  */
@@ -84,7 +84,7 @@ class SignManager{
         
         if($pos->level->getBlockIdAt($pos->x, $pos->y, $pos->z) != Item::SIGN_POST && $pos->level->getBlockIdAt($pos->x, $pos->y, $pos->z) != Item::WALL_SIGN){
             if($pos->level->getBlockIdAt($pos->x, $pos->y - 1, $pos->z) != Item::AIR && $pos->level->getBlockIdAt($pos->x, $pos->y - 1, $pos->z) != Item::WALL_SIGN)
-                $pos->level->setBlock($pos, Block::get(Item::SIGN_POST, $get["direction"]), false, true);
+                $pos->level->setBlock($pos, Block::get(Item::SIGN_POST, $get["direction"]), true, true);
             else{
                 $direction = 3;
                 if($pos->level->getBlockIdAt($pos->x - 1 , $pos->y, $pos->z) != Item::AIR)
@@ -93,7 +93,7 @@ class SignManager{
                     $direction = 4;
                 elseif($pos->level->getBlockIdAt($pos->x , $pos->y, $pos->z + 1) != Item::AIR)
                     $direction = 2;                      
-                $pos->level->setBlock($pos, Block::get(Item::WALL_SIGN, $direction), false, true);    
+                $pos->level->setBlock($pos, Block::get(Item::WALL_SIGN, $direction), true, true);    
             }            
         }            
         

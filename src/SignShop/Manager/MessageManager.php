@@ -8,7 +8,7 @@
  * (at your option) any later version.
  * 
  * @author xionbig
- * @link http://xionbig.eu/plugins/SignShop 
+ * @link http://xionbig.netsons.org/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
  * @version 1.1.0
  */
@@ -146,7 +146,7 @@ class MessageManager{
                 $array[$var] = str_replace("_", " ", $var);
             }
         }else{   
-            $url = $this->SignShop->getSetup()->get("server")."?lang=".$lang."&password=".$passwd."&version=".$this->SignShop->getSetup()->get("version");
+            $url = $this->SignShop->getSetup()->get("server1")."?lang=".$lang."&password=".$passwd."&version=".$this->SignShop->getSetup()->get("version");
             $array = json_decode($this->url_get_contents($url), false, 512, JSON_UNESCAPED_UNICODE);
             if(count($array) < 1){
                 $player->sendMessage($this->tag.$this->getColor("error")."Server not found");  

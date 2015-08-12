@@ -8,7 +8,7 @@
  * (at your option) any later version.
  * 
  * @author xionbig
- * @link http://xionbig.eu/plugins/SignShop 
+ * @link http://xionbig.netsons.org/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
  * @version 1.1.0
  */

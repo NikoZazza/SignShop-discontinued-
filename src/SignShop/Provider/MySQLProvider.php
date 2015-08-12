@@ -8,7 +8,7 @@
  * (at your option) any later version.
  * 
  * @author xionbig
- * @link http://xionbig.eu/plugins/SignShop 
+ * @link http://xionbig.netsons.org/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
  * @version 1.1.0
  */
@@ -78,7 +78,7 @@ class MySQLProvider{
         else
             $this->database->query("UPDATE plr SET authorized = '".$this->database->escape_string($data["authorized"])."', changed = ".intval($data["changed"]).", echo = '".$this->database->escape_string($data["echo"])."' WHERE player = '".$this->database->escape_string($player)."' ");
     }
-    
+
     public function getPlayer($player){
         $player = strtolower(trim($player));
         $query = $this->database->query("SELECT * FROM plr WHERE player = '".$this->database->escape_string($player)."' ");

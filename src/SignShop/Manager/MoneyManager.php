@@ -8,7 +8,7 @@
  * (at your option) any later version.
  * 
  * @author xionbig
- * @link http://xionbig.eu/plugins/SignShop 
+ * @link http://xionbig.netsons.org/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
  * @version 1.1.0
  */
@@ -70,8 +70,8 @@ class MoneyManager{
     }
     
     public function isExists($player){
-        if($this->PocketMoney) return $this->PocketMoney->accountExists($player);
-        elseif($this->EconomyS) return $this->EconomyS->isRegistered($player);
+        if($this->PocketMoney) return $this->PocketMoney->isRegistered($player);
+        elseif($this->EconomyS) return $this->EconomyS->accountExists($player);
         elseif($this->MassiveEconomy) return $this->MassiveEconomy->isPlayerRegistered($player);
         return false;
     }
