@@ -8,9 +8,13 @@
  * (at your option) any later version.
  * 
  * @author xionbig
+ * @name SignShop
+ * @main SignShop\SignShop
  * @link http://xionbig.netsons.org/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 1.1.0
+ * @description Buy and Sell the items using Signs with virtual-money.
+ * @version 1.1.2
+ * @api 1.11.0
  */
 namespace SignShop\Manager;
 
@@ -18,6 +22,7 @@ use SignShop\SignShop;
 use pocketmine\plugin\Plugin;
 
 class MoneyManager{
+    /** @var Plugin */
     private $PocketMoney = false, $EconomyS = false, $MassiveEconomy = false;
         
     public function __construct(SignShop $SignShop){        
@@ -32,8 +37,8 @@ class MoneyManager{
         
         elseif($SignShop->getServer()->getPluginManager()->getPlugin("EconomyAPI") instanceof Plugin){
             $version = explode(".", $SignShop->getServer()->getPluginManager()->getPlugin("EconomyAPI")->getDescription()->getVersion());
-            if($version[1] < 5){
-                $SignShop->getLogger()->critical("The version of EconomyS is too old! Please update EconomyS to version 5.5");
+            if($version[0] < 2){
+                $SignShop->getLogger()->critical("The version of EconomyAPI is too old! Please update EconomyAPI to version 2.0.8");
                 $SignShop->getServer()->shutdown();                
             }
             $this->EconomyS = $SignShop->getServer()->getPluginManager()->getPlugin("EconomyAPI");
@@ -48,6 +53,9 @@ class MoneyManager{
         }  
     }
     
+    /**
+     * @return string
+     */
     public function getValue(){
         if($this->PocketMoney) return "pm";
         if($this->EconomyS) return "$";
@@ -55,6 +63,10 @@ class MoneyManager{
         return "?";
     }    
     
+    /**
+     * @param type $player
+     * @return int
+     */
     public function getMoney($player){
         if($this->PocketMoney) return $this->PocketMoney->getMoney($player);
         if($this->EconomyS) return $this->EconomyS->myMoney($player);  
@@ -62,6 +74,11 @@ class MoneyManager{
         return 0;
     }
     
+    /**
+     * @param type $player
+     * @param type $value
+     * @return boolean
+     */
     public function addMoney($player, $value){
         if($this->PocketMoney) $this->PocketMoney->setMoney($player, $this->getMoney($player) + $value);
         elseif($this->EconomyS) $this->EconomyS->setMoney($player, $this->getMoney($player) + $value);
@@ -69,6 +86,10 @@ class MoneyManager{
         return false;
     }
     
+    /**
+     * @param type $player
+     * @return boolean
+     */
     public function isExists($player){
         if($this->PocketMoney) return $this->PocketMoney->isRegistered($player);
         elseif($this->EconomyS) return $this->EconomyS->accountExists($player);

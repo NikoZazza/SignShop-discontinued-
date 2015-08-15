@@ -8,9 +8,13 @@
  * (at your option) any later version.
  * 
  * @author xionbig
+ * @name SignShop
+ * @main SignShop\SignShop
  * @link http://xionbig.netsons.org/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 1.1.0
+ * @description Buy and Sell the items using Signs with virtual-money.
+ * @version 1.1.2
+ * @api 1.11.0
  */
 namespace SignShop;
 
@@ -23,9 +27,10 @@ use Provider\SQLiteProvider;
 use Provider\YAMLProvider;
 
 class SignShop extends PluginBase implements Listener{ 
+    /** @var array */
     public $temp = [];
-    private $setup, $provider;
-    private $manager = [];    
+    /** @var array */
+    private $setup, $provider, $manager = [];    
     
     public function onEnable(){
         $dataResources = $this->getDataFolder()."/resources/";
@@ -72,7 +77,6 @@ class SignShop extends PluginBase implements Listener{
         
         $this->manager["message"] = new Manager\MessageManager($this, $dataResources);
         $this->manager["command"] = new Command\SignShopCommand($this); 
-        $this->manager["items"] = new Manager\ListItems();
         $this->manager["money"] = new Manager\MoneyManager($this);
         $this->manager["sign"] = new Manager\SignManager($this);
 
@@ -85,25 +89,37 @@ class SignShop extends PluginBase implements Listener{
         $this->getServer()->getLogger()->info(TextFormat::GOLD."SignShop v".$this->getDescription()->getVersion()." Enabled!");
     }
     
+    /**
+     * @return MessageManager
+     */
     public function messageManager(){
         return $this->manager["message"];
     }
+    
+    /**
+     * @return MoneyManager
+     */
     public function getMoneyManager(){
         return $this->manager["money"];
     }
     
+    /**
+     * @return SignManager
+     */
     public function getSignManager(){
         return $this->manager["sign"];
     }
-    
-    public function getItems(){
-        return $this->manager["items"];
-    }    
-    
+        
+    /**
+     * @return Config
+     */
     public function getSetup(){
         return $this->setup;
     }
     
+    /**
+     * @return MySQLProvider or SQLiteProvider or YAMLProvider
+     */
     public function getProvider(){
         return $this->provider;
     }

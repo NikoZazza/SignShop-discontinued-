@@ -8,9 +8,13 @@
  * (at your option) any later version.
  * 
  * @author xionbig
+ * @name SignShop
+ * @main SignShop\SignShop
  * @link http://xionbig.netsons.org/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 1.1.0
+ * @description Buy and Sell the items using Signs with virtual-money.
+ * @version 1.1.2
+ * @api 1.11.0
  */
 namespace SignShop\EventListener;
 
@@ -88,7 +92,7 @@ class PlayerSignCreateEvent implements Listener{
                 if(!is_numeric($id) || !is_numeric($damage)) 
                     $error = "Item Not_Numeric";
             }else{
-                $item = $this->SignShop->getItems()->getBlock($line1); 
+                $item = Item::fromString($line1); 
                 $id = $item->getID();
                 $damage = $item->getDamage();
                 if($id == 0) 
@@ -153,7 +157,7 @@ class PlayerSignCreateEvent implements Listener{
                     if($need == -1)
                         $need = "∞";
                     $event->setLine(0, TextFormat::GOLD."[SignSell]");
-                    $event->setLine(1, TextFormat::ITALIC.$this->SignShop->getItems()->getName($id, $damage));
+                    $event->setLine(1, TextFormat::ITALIC.str_replace(" ", "", Item::get($id, $damage)->getName()));
                     $event->setLine(2, "0/".$need);
                     $event->setLine(3, $cost.$this->SignShop->getMoneyManager()->getValue()." for ".$amount);
             }
@@ -205,7 +209,7 @@ class PlayerSignCreateEvent implements Listener{
                 if(!is_numeric($id) || !is_numeric($damage)) 
                     $error = "Item Not_Numeric";
             }else{
-                $item = $this->SignShop->getItems()->getBlock($line1); 
+                $item = Item::fromString($line1); 
                 $id = $item->getID();
                 $damage = $item->getDamage();
                 if($id == 0) 
@@ -267,7 +271,7 @@ class PlayerSignCreateEvent implements Listener{
                     $this->SignShop->messageManager()->send($player, "Sign_successfully_created");
 
                     $event->setLine(0, TextFormat::GOLD."[SignBuy]");
-                    $event->setLine(1, TextFormat::ITALIC.$this->SignShop->getItems()->getName($id, $damage));
+                    $event->setLine(1, TextFormat::ITALIC.str_replace(" ", "", Item::get($get["id"], $get["damage"])->getName()));
                     $event->setLine(2, "Amount: x".$amount);
                     $event->setLine(3, "Price: ".$cost.$this->SignShop->getMoneyManager()->getValue());
                     }else{

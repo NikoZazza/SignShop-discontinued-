@@ -8,9 +8,13 @@
  * (at your option) any later version.
  * 
  * @author xionbig
+ * @name SignShop
+ * @main SignShop\SignShop
  * @link http://xionbig.netsons.org/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 1.1.0
+ * @description Buy and Sell the items using Signs with virtual-money.
+ * @version 1.1.2
+ * @api 1.11.0
  */
 namespace SignShop\Command;
 

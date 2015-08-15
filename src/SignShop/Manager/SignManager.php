@@ -8,9 +8,13 @@
  * (at your option) any later version.
  * 
  * @author xionbig
+ * @name SignShop
+ * @main SignShop\SignShop
  * @link http://xionbig.netsons.org/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 1.1.0
+ * @description Buy and Sell the items using Signs with virtual-money.
+ * @version 1.1.2
+ * @api 1.11.0
  */
 namespace SignShop\Manager;
 
@@ -101,7 +105,7 @@ class SignManager{
             if($get["need"] == -1)
                 $get["need"] = "∞";
             $line = [TextFormat::GOLD."[SignSell]", 
-                    TextFormat::ITALIC.$this->SignShop->getItems()->getName($get["id"], $get["damage"]), 
+                    TextFormat::ITALIC.str_replace(" ", "", Item::get($get["id"], $get["damage"])->getName()), 
                     $get["available"]."/".$get["need"], 
                     $get["cost"].$this->SignShop->getMoneyManager()->getValue().TextFormat::BLACK." for ".$get["amount"]
                 ];
@@ -116,7 +120,7 @@ class SignManager{
             }   
             
             $line = [TextFormat::GOLD."[SignBuy]", 
-                    TextFormat::ITALIC.$this->SignShop->getItems()->getName($get["id"], $get["damage"]),
+                    TextFormat::ITALIC.str_replace(" ", "", Item::get($get["id"], $get["damage"])->getName()),
                     "Amount: x".$get["amount"],
                     $get["cost"]
                 ];

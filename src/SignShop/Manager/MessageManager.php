@@ -8,9 +8,13 @@
  * (at your option) any later version.
  * 
  * @author xionbig
+ * @name SignShop
+ * @main SignShop\SignShop
  * @link http://xionbig.netsons.org/plugins/SignShop 
  * @link http://forums.pocketmine.net/plugins/signshop.668/
- * @version 1.1.0
+ * @description Buy and Sell the items using Signs with virtual-money.
+ * @version 1.1.2
+ * @api 1.11.0
  */
 namespace SignShop\Manager;
 
@@ -137,7 +141,11 @@ class MessageManager{
             $message = str_replace("@@", $toReplace, $message);
         $player->sendMessage($this->tag.$alert.$message);
     }
-        
+    
+    public function sendMessage($player, $message){
+        $this->send($player, $message);
+    }
+    
     public function downloadLang($player, $lang, $passwd = false){
         $player->sendMessage($this->tag.$this->getColor("warning")."Connecting to the server");
         if($lang == "en"){
