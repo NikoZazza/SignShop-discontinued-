@@ -41,30 +41,7 @@ class PlayerSignCreateEvent implements Listener{
             $this->signBuy($event);
         return;
     }
-    
-    private function removeItemPlayer(Player $player, $item){
-        if($this->SignShop->getProvider()->getPlayer($player->getName())["authorized"] == "root") return true; 
-        $ris = $item->getCount();
-        
-        if($player->getGamemode() != 1){
-            for($i = 0; $i <= $player->getInventory()->getSize(); $i = $i + 1){
-                $inv = $player->getInventory()->getItem($i);
-                if($inv->getID() == $item->getID() && $inv->getDamage() == $item->getDamage()){
-                    $ris = $inv->getCount() - $ris;
 
-                    if($ris <= 0){
-                        $player->getInventory()->clear($i);
-                        $ris = -($ris);
-                    }else{
-                        $player->getInventory()->setItem($i, Item::get($item->getID(), $item->getDamage(), $ris));
-                        return true;
-                    }
-                }
-            }
-        }
-        return true;
-    }
-        
     private function signSell(Event $event){
         if(!$event instanceof SignChangeEvent)
             return;
@@ -271,7 +248,7 @@ class PlayerSignCreateEvent implements Listener{
                     $this->SignShop->messageManager()->send($player, "Sign_successfully_created");
 
                     $event->setLine(0, TextFormat::GOLD."[SignBuy]");
-                    $event->setLine(1, TextFormat::ITALIC.str_replace(" ", "", Item::get($get["id"], $get["damage"])->getName()));
+                    $event->setLine(1, TextFormat::ITALIC.str_replace(" ", "", Item::get($id, $damage)->getName()));
                     $event->setLine(2, "Amount: x".$amount);
                     $event->setLine(3, "Price: ".$cost.$this->SignShop->getMoneyManager()->getValue());
                     }else{
@@ -298,20 +275,25 @@ class PlayerSignCreateEvent implements Listener{
         }       
     }
 
-    private function hasItemPlayer(Player $player, $item){
-        if($this->SignShop->getProvider()->getPlayer($player->getName())["authorized"] == "root") 
-            return true; 
-        
-        $ris = 0;
-        if($player->getGamemode() != 1){
-            for($i = 0; $i <= $player->getInventory()->getSize(); ++$i){
-                $inv = $player->getInventory()->getItem($i);
-                if($inv->getID() == $item->getID() && $inv->getDamage() == $item->getDamage())
-                    $ris += $inv->getCount();      
-            }
-        }
-        if($ris >= $item->getCount()) 
-            return true;
-        return false;
+    /**
+     * @param Player $player
+     * @param Item $item
+     * @return boolean
+     */
+    private function removeItemPlayer(Player $player, Item $item){
+        if($this->SignShop->getProvider()->getPlayer(strtolower($player->getName()))["authorized"] != "root")
+            $player->getInventory()->remove($item);
+        return true;
+    }
+
+    /**
+     * @param Player $player
+     * @param Item $item
+     * @return boolean
+     */
+    private function hasItemPlayer(Player $player, Item $item){
+        if($this->SignShop->getProvider()->getPlayer(strtolower($player->getName()))["authorized"] == "root")
+            return $player->getInventory()->contains($item);
+        return true;
     }
 }

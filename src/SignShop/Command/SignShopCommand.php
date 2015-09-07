@@ -337,7 +337,7 @@ class SignShopCommand extends Command implements PluginIdentifiableCommand{
                 case "empty":
                     return;
             }
-            return str_replace("@@", $args[1], $this->SignShop->messageManager()->getMessage("The_command_<@@>_was_not_found!_Use_/sign_help"));
+            return str_replace("@@", $cmd, $this->SignShop->messageManager()->getMessage("The_command_<@@>_was_not_found!_Use_/sign_help"));
         }
         $message = "";
         if($op){

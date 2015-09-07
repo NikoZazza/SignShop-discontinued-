@@ -22,9 +22,9 @@ use pocketmine\event\Listener;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\Config;
 use pocketmine\utils\TextFormat;
-use Provider\MySQLProvider;
-use Provider\SQLiteProvider;
-use Provider\YAMLProvider;
+use SignShop\Provider\MySQLProvider;
+use SignShop\Provider\SQLiteProvider;
+use SignShop\Provider\YAMLProvider;
 
 class SignShop extends PluginBase implements Listener{ 
     /** @var array */
