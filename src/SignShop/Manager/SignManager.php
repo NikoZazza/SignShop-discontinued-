@@ -173,7 +173,7 @@ class SignManager{
             return true;
         }else{            
             $world = Server::getInstance()->getLevelByName(str_replace("%", " ", trim($world)));
-            foreach($this->signs[$world] as $world => $var){                
+            foreach($this->signs[$world->getName()] as $w => $var){                
                 foreach($var as $pos => $c){
                     $t = explode(":", $pos);
                     $this->spawnSign(new Position($t[0], $t[1], $t[2], $world));                
