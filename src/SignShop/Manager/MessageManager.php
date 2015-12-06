@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SignShop Copyright (C) 2015 xionbig
  *
