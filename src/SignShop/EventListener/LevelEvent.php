@@ -30,6 +30,6 @@ class LevelEvent implements Listener{
     }
     
     public function levelLoad(LevelLoadEvent $event){
-        $this->SignShop->getSignManager()->reload($event->getLevel()->getName());
+        $this->SignShop->getSignManager()->reload($event->getLevel());
     }    
 }
