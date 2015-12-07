@@ -283,9 +283,26 @@ class PlayerTouchEvent implements Listener{
      * @param Item $item
      * @return boolean
      */
-    private function removeItemPlayer(Player $player, Item $item){
-        if($this->SignShop->getProvider()->getPlayer(strtolower($player->getName()))["authorized"] != "root")
-            $player->getInventory()->remove($item);
+    private function removeItemPlayer(Player $player, $item){
+        if($this->SignShop->getProvider()->getPlayer($player->getName())["authorized"] == "root") return true;
+
+        $ris = $item->getCount();
+
+        if($player->getGamemode() != 1){
+            for($i = 0; $i <= $player->getInventory()->getSize(); $i = $i + 1){
+                $inv = $player->getInventory()->getItem($i);
+                    if($inv->getID() == $item->getID() && $inv->getDamage() == $item->getDamage()){
+                        $ris = $inv->getCount() - $ris;
+                        if($ris <= 0){
+                            $player->getInventory()->clear($i);
+                           $ris = -($ris);
+                        }else{
+                            $player->getInventory()->setItem($i, Item::get($item->getID(), $item->getDamage(), $ris));
+                            return true;
+                        }
+                    }
+                }
+            }
         return true;
     }
 
@@ -294,17 +311,29 @@ class PlayerTouchEvent implements Listener{
      * @param Item $item
      * @return boolean
      */
-    private function hasItemPlayer(Player $player, Item $item){
-        if($this->SignShop->getProvider()->getPlayer(strtolower($player->getName()))["authorized"] == "root")
-            return $player->getInventory()->contains($item);
-        return true;
-    }
+     private function hasItemPlayer(Player $player, Item $item){
+         if ($this->SignShop->getProvider()->getPlayer(strtolower($player->getName()))["authorized"] == "root") return true;
+         $ris = 0;
+         if ($player->getGamemode() != 1) {
+             for ($i = 0; $i <= $player->getInventory()->getSize(); ++$i) {
+                 $inv = $player->getInventory()->getItem($i);
+                 if ($inv->getID() == $item->getID() && $inv->getDamage() == $item->getDamage())
+                     $ris = $ris + $inv->getCount();
+             }
+         }
+         if ($ris >= $item->getCount())
+             return true;
+         return false;
+     }
 
     /**
      * @param string $player
      * @return Player
      */
     public function getPlayer($player){
-        return Server::getInstance()->getPlayer($player);
+        $p = Server::getInstance()->getPlayer($player);
+        if(strtolower($p->getName()) == strtolower($player))
+            return $p;
+        return null;
     }
 }
