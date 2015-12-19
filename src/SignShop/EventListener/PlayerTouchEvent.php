@@ -332,7 +332,7 @@ class PlayerTouchEvent implements Listener{
      */
     public function getPlayer($player){
         $p = Server::getInstance()->getPlayer($player);
-        if(strtolower($p->getName()) == strtolower($player))
+        if($p instanceof Player && strtolower($p->getName()) == strtolower($player))
             return $p;
         return null;
     }
