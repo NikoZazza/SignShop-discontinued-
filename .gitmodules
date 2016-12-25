@@ -1,0 +1,3 @@
+[submodule "lib/Economizer"]
+	path = lib/Economizer
+	url = https://github.com/Chris-Prime/Economizer.git
