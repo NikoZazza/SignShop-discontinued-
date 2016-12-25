@@ -1,99 +1,90 @@
 <?php
 /**
- * SignShop Copyright (C) 2015 xionbig
+ * SignShop Copyright (C) 2016 NikoZazza
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
- * @author xionbig
+ *
+ * @author NikoZazza
  * @name SignShop
  * @main SignShop\SignShop
- * @link http://xionbig.netsons.org/plugins/SignShop 
+ * @link http://nikozazza.sixcosoft.net/plugins/SignShop
  * @link http://forums.pocketmine.net/plugins/signshop.668/
  * @description Buy and Sell the items using Signs with virtual-money.
- * @version 1.1.2
- * @api 1.11.0
+ * @version 3.0.0
+ * @api 2.0.0
  */
 namespace SignShop\Manager;
 
+use economizer\Economizer;
+use economizer\Transistor;
 use SignShop\SignShop;
 use pocketmine\plugin\Plugin;
+use sll\LibLoader;
 
-class MoneyManager{
-    /** @var Plugin */
-    private $PocketMoney = false, $EconomyS = false, $MassiveEconomy = false;
-        
-    public function __construct(SignShop $SignShop){        
-        if($SignShop->getServer()->getPluginManager()->getPlugin("PocketMoney") instanceof Plugin){
-            $version = explode(".", $SignShop->getServer()->getPluginManager()->getPlugin("PocketMoney")->getDescription()->getVersion());
-            if($version[0] < 4){
-                $SignShop->getLogger()->critical("The version of PocketMoney is too old! Please update PocketMoney to version 4.0.1");
-                $SignShop->getServer()->shutdown();                
-            }
-            $this->PocketMoney = $SignShop->getServer()->getPluginManager()->getPlugin("PocketMoney");
+class MoneyManager
+{
+    /** @var Transistor */
+    private $EconomyAPI;
+
+    public function __construct(SignShop $SignShop, $getFile)
+    {
+        $this->SignShop = $SignShop;
+        LibLoader::loadLib($getFile, "Economizer");
+        $plugin = $SignShop->getServer()->getPluginManager()->getPlugin($SignShop->getSetup()->get("economyPlugin"));
+        if (!($plugin instanceof Plugin)){
+            $SignShop->getLogger()->critical("The plugin '".$SignShop->getSetup()->get("economyPlugin")."' wasn't loaded!");
+            $SignShop->getPluginLoader()->disablePlugin($SignShop);
+            return;
         }
-        
-        elseif($SignShop->getServer()->getPluginManager()->getPlugin("EconomyAPI") instanceof Plugin){
-            $version = explode(".", $SignShop->getServer()->getPluginManager()->getPlugin("EconomyAPI")->getDescription()->getVersion());
-            if($version[0] < 2){
-                $SignShop->getLogger()->critical("The version of EconomyAPI is too old! Please update EconomyAPI to version 2.0.8");
-                $SignShop->getServer()->shutdown();                
-            }
-            $this->EconomyS = $SignShop->getServer()->getPluginManager()->getPlugin("EconomyAPI");
+        $transistor = Economizer::getTransistorFor($plugin);
+        if(!$transistor) {
+            $SignShop->getLogger()->critical("The plugin '".$SignShop->getSetup()->get("economyPlugin")."' isn't supported!");
+            $SignShop->getPluginLoader()->disablePlugin($SignShop);
+            return;
         }
-        
-        elseif($SignShop->getServer()->getPluginManager()->getPlugin("MassiveEconomy") instanceof Plugin)
-            $this->MassiveEconomy = $SignShop->getServer()->getPluginManager()->getPlugin("MassiveEconomy");
-        
-        else{
-            $SignShop->getLogger()->critical("This plugin to work needs the plugin PocketMoney or EconomyS or MassiveEconomy.");
-            $SignShop->getServer()->shutdown();
-        }  
+        $this->EconomyAPI = new Economizer($SignShop, $transistor);
+        $SignShop->getLogger()->notice("The plugin '".$SignShop->getSetup()->get("economyPlugin")."' has been associated with SignShop successfully");
     }
-    
+
     /**
      * @return string
      */
-    public function getValue(){
-        if($this->PocketMoney) return "pm";
-        if($this->EconomyS) return "$";
-        if($this->MassiveEconomy) return $this->MassiveEconomy->getMoneySymbol();
-        return "?";
-    }    
-    
+    public function getValue() : string
+    {
+        return $this->EconomyAPI->getMoneyUnit();
+    }
+
     /**
-     * @param type $player
+     * @param Player|string $player
      * @return int
      */
-    public function getMoney($player){
-        if($this->PocketMoney) return $this->PocketMoney->getMoney($player);
-        if($this->EconomyS) return $this->EconomyS->myMoney($player);  
-        if($this->MassiveEconomy) return $this->MassiveEconomy->getMoney($player);
-        return 0;
+    public function getMoney($player) : int
+    {
+        return $this->EconomyAPI->balance($player);
     }
-    
+
     /**
-     * @param type $player
-     * @param type $value
+     * @param Player|string $player
+     * @param integer $value
+     */
+    public function addMoney($player, $value)
+    {
+        if($value < 0)
+            $this->EconomyAPI->takeMoney($player, $value);
+        else
+            $this->EconomyAPI->addMoney($player, $value);
+//        $this->EconomyAPI->setMoney($player, $this->getMoney($player) + $value);
+    }
+
+    /**
+     * @param Player|string $player
      * @return boolean
      */
-    public function addMoney($player, $value){
-        if($this->PocketMoney) $this->PocketMoney->setMoney($player, $this->getMoney($player) + $value);
-        elseif($this->EconomyS) $this->EconomyS->setMoney($player, $this->getMoney($player) + $value);
-        elseif($this->MassiveEconomy) $this->MassiveEconomy->setMoney($player, $this->getMoney($player) + $value);
-        return false;
-    }
-    
-    /**
-     * @param type $player
-     * @return boolean
-     */
-    public function isExists($player){
-        if($this->PocketMoney) return $this->PocketMoney->isRegistered($player);
-        elseif($this->EconomyS) return $this->EconomyS->accountExists($player);
-        elseif($this->MassiveEconomy) return $this->MassiveEconomy->isPlayerRegistered($player);
-        return false;
+    public function isExists($player) : bool
+    {
+        return (bool) $this->getMoney($player);
     }
 }

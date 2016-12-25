@@ -40,6 +40,7 @@ class SignShop extends PluginBase implements Listener{
             @mkdir($dataResources, 0755, true);
         
         $this->setup = new Config($dataResources. "config.yml", Config::YAML, [
+            "economyPlugin" => "EconomyAPI",
                 "version" => "oneone",
                 "signCreated" => "all",
                 "lastChange" => time(),
@@ -77,7 +78,7 @@ class SignShop extends PluginBase implements Listener{
         
         $this->manager["message"] = new Manager\MessageManager($this, $dataResources);
         $this->manager["command"] = new Command\SignShopCommand($this); 
-        $this->manager["money"] = new Manager\MoneyManager($this);
+        $this->manager["money"] = new Manager\MoneyManager($this, $this->getFile());
         $this->manager["sign"] = new Manager\SignManager($this);
 
         $this->getServer()->getCommandMap()->register("sign", $this->manager["command"]);
@@ -88,7 +89,8 @@ class SignShop extends PluginBase implements Listener{
         $this->getServer()->getPluginManager()->registerEvents(new EventListener\PlayerSignCreateEvent($this), $this);
         $this->getServer()->getLogger()->info(TextFormat::GOLD."SignShop v".$this->getDescription()->getVersion()." Enabled!");
     }
-    
+
+
     /**
      * @return MessageManager
      */
